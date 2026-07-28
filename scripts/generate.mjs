@@ -83,7 +83,7 @@ function buildPrompt({ iso, label }, history) {
     ? history.titles.slice(0, 60).map((t) => `- ${t}`).join('\n')
     : '(aucun historique, première édition)';
 
-  return `Tu es le coach expert marketing digital de Jean-Aurélien Berthaud, Responsable Marketing Digital depuis 10 ans dans l'enseignement supérieur privé (écoles en informatique, commerce, immobilier, communication, journalisme, cinéma, design — BTS, Bachelor, Mastère).
+  return `Tu es le coach expert marketing digital d'une équipe marketing de l'enseignement supérieur privé, pilotée par un Responsable Marketing Digital de 10 ans d'expérience (écoles en informatique, commerce, immobilier, communication, journalisme, cinéma, design — BTS, Bachelor, Mastère).
 
 Nous sommes le ${label}. Produis la veille marketing digital du jour.
 
