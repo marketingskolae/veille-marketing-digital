@@ -27,7 +27,8 @@ const PROVIDER = process.env.PROVIDER || (process.env.GEMINI_API_KEY && !process
 const DRY_RUN = process.env.DRY_RUN === '1';
 const DEBUG_RAW = process.env.DEBUG_RAW === '1';
 const MAX_DAYS = 14;
-const MAX_CANDIDATS = 55;
+const MAX_CANDIDATS = 75;      // plafond global (budget : ~5 500 tokens sur 8 000)
+const MAX_PAR_GROUPE = 22;     // plafond par thème pressenti
 
 const THEMES = [
   { cle: 'seo', titre: 'SEO / GEO' },
@@ -161,8 +162,10 @@ Sélectionne les plus pertinents et rédige la veille du jour.
 
 MÉTHODE — traite les 5 thèmes un par un, dans cet ordre : SEO/GEO, IA marketing, SEA/Social Ads, Analytics/GTM, UX/CRO. Pour chacun, examine les pistes du groupe correspondant ET celles du groupe « Divers ». Le regroupement ci-dessus est indicatif : un article classé en SEO peut relever de l'IA, et inversement — c'est à toi de trancher selon son sujet réel.
 
+VOLUME ATTENDU — retiens 10 à 16 articles au total, soit 2 à 4 par thème. C'est une veille quotidienne destinée à être lue en cinq minutes : en dessous de 10 articles elle est trop maigre pour être utile, au-delà de 16 elle devient indigeste. Tu disposes de ${candidats.length} candidats : sélectionne sévèrement, mais sélectionne.
+
 RÈGLES
-- Vise 2 à 4 articles par thème quand la matière existe. Ne laisse un thème vide que si rien ne s'en approche vraiment : c'est alors un résultat honnête, mais vérifie d'abord le groupe « Divers ».
+- Ne laisse un thème vide que si rien ne s'en approche vraiment : c'est alors un résultat honnête, mais vérifie d'abord le groupe « Divers ».
 - Écarte ce qui n'a pas d'application marketing concrète (actualité tech générale, cybersécurité, levées de fonds, faits divers).
 - Un même article ne peut apparaître que dans un seul thème.
 - Rédige 2 à 3 phrases factuelles par article, à partir du titre et du résumé fournis. N'invente aucun chiffre, aucune date, aucun fait absent du résumé. Si le résumé est trop maigre pour être factuel, n'utilise pas cet article.
@@ -311,7 +314,20 @@ try {
     console.log("Trop peu de nouveautés pour justifier une édition. index.html inchangé.");
     process.exitCode = 0;
   } else {
-    const candidats = nouveaux.slice(0, MAX_CANDIDATS).map((a, i) => ({ ...a, id: i + 1 }));
+    // Plafonner globalement écrasait les thèmes faibles : le tri étant
+    // antichronologique, les sources lentes (UX, Analytics) tombaient les
+    // premières. On plafonne donc par thème avant le plafond global, pour
+    // qu'aucun thème ne puisse être éliminé par le volume d'un autre.
+    const parGroupe = new Map();
+    const selection = [];
+    for (const a of nouveaux) {
+      const n = (parGroupe.get(a.theme) || 0) + 1;
+      if (n > MAX_PAR_GROUPE) continue;
+      parGroupe.set(a.theme, n);
+      selection.push(a);
+      if (selection.length >= MAX_CANDIDATS) break;
+    }
+    const candidats = selection.map((a, i) => ({ ...a, id: i + 1 }));
     const parId = new Map(candidats.map((c) => [c.id, c]));
 
     const prompt = construirePrompt(date, candidats);

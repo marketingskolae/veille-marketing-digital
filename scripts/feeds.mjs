@@ -21,14 +21,21 @@ export const FEEDS = [
   { nom: 'Ahrefs', url: 'https://ahrefs.com/blog/feed/', theme: 'seo', heures: 96 },
   { nom: 'Abondance', url: 'https://www.abondance.com/feed', theme: 'seo', heures: 48 },
   { nom: 'WebRankInfo', url: 'https://www.webrankinfo.com/rss.xml', theme: 'seo', heures: 168 },
+  { nom: 'SparkToro', url: 'https://sparktoro.com/blog/feed/', theme: 'seo', heures: 168 },
+  { nom: 'Aleyda Solis', url: 'https://www.aleydasolis.com/en/feed/', theme: 'seo', heures: 336 },
+  { nom: 'iPullRank', url: 'https://ipullrank.com/feed', theme: 'seo', heures: 336 },
 
   // ── SEA / Social Ads ─────────────────────────────────────────────────────
   { nom: 'Search Engine Land — PPC', url: 'https://searchengineland.com/library/ppc/feed', theme: 'sea', heures: 48 },
   { nom: 'Google Ads & Commerce', url: 'https://blog.google/products/ads-commerce/rss/', theme: 'sea', heures: 240 },
+  { nom: 'Jon Loomer', url: 'https://www.jonloomer.com/feed/', theme: 'sea', heures: 96 },
 
   // ── Généralistes : alimentent IA, SEA et GA4 selon les jours ─────────────
   { nom: 'Blog du Modérateur', url: 'https://www.blogdumoderateur.com/feed/', theme: 'mixte', heures: 48 },
   { nom: 'Semrush', url: 'https://www.semrush.com/blog/feed/', theme: 'mixte', heures: 96 },
+  // Flux d'archive volumineux (~1000 items) et largement hors marketing
+  // (recherche, sécurité) : fenêtre courte, le tri est fait par le modèle.
+  { nom: 'OpenAI', url: 'https://openai.com/blog/rss.xml', theme: 'mixte', heures: 96 },
 
   // ── Analytics / Tracking ─────────────────────────────────────────────────
   { nom: 'Simo Ahava', url: 'https://www.simoahava.com/index.xml', theme: 'ga4', heures: 720 },
@@ -36,6 +43,7 @@ export const FEEDS = [
   // ── UX / CRO ─────────────────────────────────────────────────────────────
   { nom: 'Nielsen Norman Group', url: 'https://www.nngroup.com/feed/rss/', theme: 'ux', heures: 240 },
   { nom: 'Smashing Magazine', url: 'https://www.smashingmagazine.com/feed/', theme: 'ux', heures: 240 },
+  { nom: 'UX Collective', url: 'https://uxdesign.cc/feed', theme: 'ux', heures: 72 },
 ];
 
 const UA = 'Mozilla/5.0 (compatible; VeilleMarketingBot/1.0)';
