@@ -106,16 +106,16 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(39, 39, 39, 0.92);
     backdrop-filter: blur(8px);
-    border: 1px solid var(--bord);
+    border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: var(--pilule);
     padding: 10px 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: none;
   }
   .date-nav label {
     font-size: 11px;
-    color: var(--texte-faible);
+    color: var(--sur-sombre);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -126,22 +126,22 @@
     font-size: 14px;
     font-family: inherit;
     padding: 8px 12px;
-    border: 1px solid var(--bord-fort);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: var(--pilule);
-    background: var(--blanc);
-    color: var(--texte);
+    background: var(--noir);
+    color: var(--blanc);
   }
   .date-nav select:focus {
-    outline: 2px solid var(--noir);
+    outline: 2px solid var(--jaune);
     outline-offset: 1px;
   }
   .date-nav button {
     font-size: 15px;
     line-height: 1;
     font-family: inherit;
-    border: 1px solid var(--bord-fort);
-    background: var(--blanc);
-    color: var(--texte);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: var(--noir);
+    color: var(--blanc);
     border-radius: var(--pilule);
     width: 34px;
     height: 34px;
@@ -151,7 +151,8 @@
   }
   .date-nav button:hover:not(:disabled) {
     background: var(--jaune);
-    border-color: var(--noir);
+    border-color: var(--jaune);
+    color: var(--noir);
   }
   .date-nav button:disabled {
     opacity: 0.3;
@@ -164,7 +165,7 @@
 
   /* ── Niveau 1 : la journée ───────────────────────────────────────────── */
   .day-entry {
-    background: var(--gris-clair);
+    background: var(--gris-1);
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: var(--rayon);
     margin-bottom: 24px;
@@ -176,8 +177,8 @@
   .day-banner {
     display: inline-block;
     margin-left: 26px;
-    background: var(--noir);
-    color: var(--blanc);
+    background: var(--blanc);
+    color: var(--noir);
     padding: 9px 20px;
     border-radius: var(--pilule);
     font-size: 12px;
@@ -220,7 +221,7 @@
   /* ── Niveau 4 : le thème ─────────────────────────────────────────────── */
   .theme-block {
     padding: 26px 0 4px 0;
-    border-top: 1px solid var(--bord);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
   .theme-block:first-of-type {
     padding-top: 0;
@@ -229,7 +230,7 @@
   .theme-title {
     font-size: 12px;
     font-weight: 700;
-    color: var(--noir);
+    color: var(--blanc);
     margin: 0 0 16px 0;
     text-transform: uppercase;
     letter-spacing: 0.09em;
@@ -251,7 +252,7 @@
   .theme-block:nth-of-type(3) .theme-title::before { background: var(--mauve); }
   .theme-block:nth-of-type(4) .theme-title::before { background: var(--orange); }
   .theme-block:nth-of-type(5) .theme-title::before { background: var(--vert); }
-  .theme-block:nth-of-type(6) .theme-title::before { background: var(--noir); }
+  .theme-block:nth-of-type(6) .theme-title::before { background: var(--blanc); }
 
   /* ── Niveau 5 : l'article, sous-carte détachée du thème ──────────────── */
   .item {
@@ -315,7 +316,7 @@
   }
   .empty-theme {
     font-size: 14px;
-    color: var(--texte-faible);
+    color: var(--sur-sombre);
     font-style: italic;
     margin: 0 0 8px 0;
   }
