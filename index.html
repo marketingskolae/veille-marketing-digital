@@ -7,23 +7,25 @@
 <title>Veille Marketing Digital Quotidienne</title>
 <style>
   /* ------------------------------------------------------------------------
-     Charte Campus SKOLAE 2026
+     Charte Campus SKOLAE 2026 — déclinaison sombre
 
-     Couleurs principales : Noir #000000 · Jaune #FFF388 · Blanc #FFFFFF
-                            Gris clair #F4F4F4 · Gris 2 #393939 · Gris 1 #272727
-     Secondaires          : Bleu #ABDAEE · Mauve #E8C9FF · Orange #EBC5B0
-                            Vert #9BDEBD
-     Principes            : angles arrondis de petit rayon, aplats de couleur
-                            avec parcimonie, la couleur surligne un bloc.
+     Couleurs   : Noir #000000 · Jaune #FFF388 · Blanc #FFFFFF
+                  Gris clair #F4F4F4 · Gris 2 #393939 · Gris 1 #272727
+     Secondaires: Bleu #ABDAEE · Mauve #E8C9FF · Orange #EBC5B0 · Vert #9BDEBD
 
-     GT Walsheim et Basier Circle sont des polices sous licence commerciale :
-     elles ne peuvent pas être hébergées sur ce dépôt public. Les piles
-     ci-dessous les utilisent si elles sont installées sur le poste, sinon
-     elles retombent sur une linéale géométrique système. Pour un rendu fidèle,
-     déposer les .woff2 sous /fonts et ajouter les @font-face correspondants.
+     Éléments graphiques repris de la charte :
+       — le motif en fond de page (pavage de modules arrondis, gris sur noir) ;
+       — les étiquettes en pilule, « pour mettre les listes ou mettre en avant
+         les informations importantes » : la date du jour et les liens sources ;
+       — les aplats de couleur avec parcimonie : jaune sur la synthèse, pastels
+         réduits aux pastilles de thème.
+
+     Le motif ci-dessous est une RECONSTITUTION en SVG à partir de la page 7 de
+     la charte. Pour le motif officiel, déposer l'asset sous /img et remplacer
+     l'url() de body.
      ------------------------------------------------------------------------ */
   :root {
-    color-scheme: light;
+    color-scheme: dark;
     --noir: #000000;
     --jaune: #fff388;
     --blanc: #ffffff;
@@ -35,23 +37,23 @@
     --orange: #ebc5b0;
     --vert: #9bdebd;
 
-    --ink: var(--gris-1);
-    --ink-soft: var(--gris-2);
-    /* Gris faible non defini par la charte : derive au niveau le plus clair qui
-       reste conforme WCAG AA (4,5:1) sur les DEUX fonds de la charte, blanc et
-       gris clair. #8a8a8a plafonnait a 3,14:1 sur gris clair. */
-    --ink-faint: #6e6e6e;
-    --paper: var(--gris-clair);
-    --card: var(--blanc);
-    --line: #e2e2e2;
+    --fond: var(--noir);
+    --carte: var(--gris-1);
+    --carte-haute: var(--gris-2);
+    --texte: var(--blanc);
+    /* Gris de lecture non définis par la charte : dérivés au niveau le plus
+       sombre qui reste conforme WCAG AA (4,5:1) sur la carte #272727. */
+    --texte-doux: #cfcfcf;   /* 9,1:1  */
+    --texte-faible: #a3a3a3; /* 5,6:1  */
+    --bord: #3d3d3d;
 
     --titrage: "GT Walsheim Condensed", "GT Walsheim Pro", "Basier Circle",
       -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     --courant: "Basier Circle", -apple-system, BlinkMacSystemFont, "Segoe UI",
       "Helvetica Neue", Arial, sans-serif;
 
-    --rayon: 8px;
-    --rayon-petit: 5px;
+    --rayon: 16px;
+    --pilule: 999px;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -60,35 +62,35 @@
   }
   body {
     margin: 0;
-    padding: 32px 20px 48px 20px;
-    background: var(--paper);
-    color: var(--ink);
+    padding: 40px 20px 56px 20px;
+    background-color: var(--fond);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='%23151515'%3E%3Cpath d='M0 0h40A40 40 0 0 1 0 40Z'/%3E%3Crect x='48' width='64' height='40' rx='20'/%3E%3Cpath d='M160 40h-40A40 40 0 0 1 160 0Z'/%3E%3Ccircle cx='20' cy='60' r='20'/%3E%3Cpath d='M80 40q0 20 20 20-20 0-20 20 0-20-20-20 20 0 20-20Z'/%3E%3Crect x='120' y='48' width='40' height='64' rx='20'/%3E%3Cpath d='M0 80h40A40 40 0 0 1 0 120Z'/%3E%3Ccircle cx='80' cy='100' r='20'/%3E%3Cpath d='M40 160v-40a40 40 0 0 1 40 40Z'/%3E%3Crect x='96' y='120' width='64' height='40' rx='20'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 160px 160px;
+    color: var(--texte);
     font-family: var(--courant);
     line-height: 1.55;
   }
   .page-header {
     max-width: 720px;
-    margin: 0 auto 22px auto;
+    margin: 0 auto 24px auto;
   }
-  /* Titre principal : GT Walsheim Condensed Black Oblique, en capitales.
-     La charte réserve ce traitement au titre principal — nulle part ailleurs. */
+  /* GT Walsheim Condensed Black Oblique, capitales : la charte réserve ce
+     traitement au titre principal. */
   .page-header h1 {
     font-family: var(--titrage);
-    font-size: 30px;
+    font-size: 32px;
     font-weight: 800;
     font-style: italic;
     text-transform: uppercase;
     letter-spacing: -0.005em;
-    line-height: 1.1;
-    margin: 0 0 8px 0;
-    color: var(--noir);
+    line-height: 1.08;
+    margin: 0 0 10px 0;
+    color: var(--blanc);
   }
   .page-header p {
-    font-family: var(--courant);
     margin: 0;
-    color: var(--ink-soft);
+    color: var(--texte-faible);
     font-size: 13px;
-    letter-spacing: 0.01em;
   }
   .date-nav {
     max-width: 720px;
@@ -99,51 +101,53 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(6px);
-    border: 1px solid var(--line);
-    border-radius: var(--rayon);
+    background: rgba(39, 39, 39, 0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--bord);
+    border-radius: var(--pilule);
     padding: 10px 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
-  /* Information de type catégorie : Basier Circle Medium en capitales. */
   .date-nav label {
     font-size: 11px;
-    color: var(--ink-soft);
+    color: var(--texte-faible);
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.08em;
+    padding-left: 6px;
   }
   .date-nav select {
     flex: 1;
     font-size: 14px;
     font-family: inherit;
-    padding: 7px 10px;
-    border: 1px solid var(--line);
-    border-radius: var(--rayon-petit);
-    background: var(--blanc);
-    color: var(--ink);
+    padding: 8px 12px;
+    border: 1px solid var(--bord);
+    border-radius: var(--pilule);
+    background: var(--noir);
+    color: var(--texte);
   }
   .date-nav select:focus {
     outline: 2px solid var(--jaune);
     outline-offset: 1px;
   }
+  /* Boutons en pilule, comme les étiquettes de la charte. */
   .date-nav button {
     font-size: 15px;
     line-height: 1;
     font-family: inherit;
-    border: 1px solid var(--line);
-    background: var(--blanc);
-    color: var(--ink);
-    border-radius: var(--rayon-petit);
-    width: 32px;
-    height: 32px;
+    border: 1px solid var(--bord);
+    background: transparent;
+    color: var(--texte);
+    border-radius: var(--pilule);
+    width: 34px;
+    height: 34px;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    flex: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   .date-nav button:hover:not(:disabled) {
     background: var(--jaune);
-    border-color: var(--noir);
+    border-color: var(--jaune);
+    color: var(--noir);
   }
   .date-nav button:disabled {
     opacity: 0.3;
@@ -154,39 +158,39 @@
     margin: 0 auto;
   }
   .day-entry {
-    background: var(--card);
-    border: 1px solid var(--line);
+    background: var(--carte);
     border-radius: var(--rayon);
     margin-bottom: 24px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 22px 0 0 0;
   }
-  /* Bandeau noir / texte blanc : le contraste Master Logo de la charte. */
+  /* Étiquette blanche : « mettre en avant les informations importantes ».
+     inline-block pour que la pilule épouse le texte au lieu de courir sur
+     toute la largeur. */
   .day-banner {
-    background: var(--noir);
-    color: var(--blanc);
-    padding: 14px 24px;
-    font-family: var(--courant);
+    display: inline-block;
+    margin-left: 26px;
+    background: var(--blanc);
+    color: var(--noir);
+    padding: 9px 20px;
+    border-radius: var(--pilule);
     font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.09em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
   .day-body {
-    padding: 24px 26px 26px 26px;
+    padding: 22px 26px 26px 26px;
   }
-  /* « Utilisation de la couleur pour surligner un bloc » : le jaune de marque
-     en aplat, réservé à la synthèse — le seul bloc mis en avant de la page. */
+  /* Étiquette jaune : le bloc le plus important de la page. */
   .synthesis-block {
     background: var(--jaune);
-    border-radius: var(--rayon-petit);
-    padding: 18px 22px;
+    border-radius: var(--rayon);
+    padding: 20px 24px;
     margin-bottom: 28px;
   }
   .synthesis-title {
-    font-family: var(--courant);
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--noir);
     margin: 0 0 12px 0;
     text-transform: uppercase;
@@ -206,7 +210,7 @@
   .synthesis-list li:last-child { margin-bottom: 0; }
   .theme-block {
     padding: 22px 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--bord);
   }
   .theme-block:first-of-type { padding-top: 0; }
   .theme-block:last-child {
@@ -214,10 +218,9 @@
     padding-bottom: 0;
   }
   .theme-title {
-    font-family: var(--courant);
     font-size: 12px;
     font-weight: 600;
-    color: var(--noir);
+    color: var(--blanc);
     margin: 0 0 16px 0;
     text-transform: uppercase;
     letter-spacing: 0.09em;
@@ -225,76 +228,72 @@
     align-items: center;
     gap: 9px;
   }
-  /* Pastilles : les 4 couleurs secondaires distinguent les thèmes sans jamais
-     devenir un aplat — « aplats de couleurs à utiliser avec parcimonie ». */
+  /* Les 4 secondaires distinguent les thèmes sans jamais devenir un aplat.
+     nth-of-type compte tous les div frères et .synthesis-block occupe la
+     position 1 : les thèmes sont donc en positions 2 à 6. */
   .theme-title::before {
     content: "";
     display: inline-block;
-    width: 9px;
-    height: 9px;
-    border-radius: 2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
     background: var(--bleu);
     flex: none;
   }
-  /* Décalage volontaire : nth-of-type compte tous les div frères, et
-     .synthesis-block occupe la position 1. Les cinq thèmes sont donc en
-     positions 2 à 6. Le cinquième reçoit le noir, la charte ne comptant que
-     quatre couleurs secondaires — et le jaune reste réservé au surlignage. */
   .theme-block:nth-of-type(3) .theme-title::before { background: var(--mauve); }
   .theme-block:nth-of-type(4) .theme-title::before { background: var(--orange); }
   .theme-block:nth-of-type(5) .theme-title::before { background: var(--vert); }
-  .theme-block:nth-of-type(6) .theme-title::before { background: var(--noir); }
+  .theme-block:nth-of-type(6) .theme-title::before { background: var(--blanc); }
   .item {
-    margin-bottom: 20px;
-    padding-left: 2px;
+    margin-bottom: 22px;
   }
   .item:last-child { margin-bottom: 0; }
   .item-title {
-    font-family: var(--courant);
     font-size: 15.5px;
     font-weight: 600;
-    color: var(--noir);
+    color: var(--blanc);
     margin: 0 0 6px 0;
     line-height: 1.35;
   }
   .item-text {
     font-size: 14.5px;
     line-height: 1.6;
-    color: var(--ink-soft);
-    margin: 0 0 7px 0;
+    color: var(--texte-doux);
+    margin: 0 0 9px 0;
   }
   .item-source {
-    font-family: var(--courant);
     font-size: 12.5px;
-    color: var(--ink-faint);
+    color: var(--texte-faible);
     margin: 0;
   }
-  /* Le lien est surligné au jaune de marque, pas coloré : la charte n'emploie
-     jamais le jaune comme couleur de texte — son contraste serait insuffisant. */
+  /* Étiquette contourée, troisième variante de la charte. Sur fond sombre le
+     jaune redevient lisible en texte (12,5:1), ce qu'il n'était pas sur blanc. */
   .item-source a {
-    color: var(--ink);
+    display: inline-block;
+    color: var(--jaune);
     text-decoration: none;
-    box-shadow: inset 0 -0.5em 0 var(--jaune);
-    padding: 0 1px;
-    transition: box-shadow 0.15s ease;
+    border: 1px solid var(--bord);
+    border-radius: var(--pilule);
+    padding: 3px 12px;
+    margin-left: 2px;
+    transition: border-color 0.15s ease, background 0.15s ease;
   }
   .item-source a:hover {
-    box-shadow: inset 0 -1em 0 var(--jaune);
+    border-color: var(--jaune);
+    background: rgba(255, 243, 136, 0.08);
   }
   .empty-theme {
     font-size: 14px;
-    color: var(--ink-faint);
+    color: var(--texte-faible);
     font-style: italic;
     margin: 0;
   }
   .footer-note {
     max-width: 720px;
-    margin: 16px auto 0 auto;
-    font-family: var(--courant);
+    margin: 20px auto 0 auto;
     font-size: 11.5px;
-    color: var(--ink-faint);
+    color: var(--texte-faible);
     text-align: center;
-    letter-spacing: 0.01em;
   }</style>
 </head>
 <body>
