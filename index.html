@@ -47,6 +47,10 @@
     --texte-faible: #6e6e6e;
     --bord: #e2e2e2;
     --bord-fort: #cfcfcf;
+    /* Gris posé directement sur le fond noir : 8,3:1 */
+    --sur-sombre: #a3a3a3;
+    /* Gris pose directement sur le fond noir : 8,3:1. */
+    --sur-sombre: #a3a3a3;
 
     --titrage: "GT Walsheim Condensed", "GT Walsheim Pro", "Basier Circle",
       -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -65,8 +69,8 @@
   body {
     margin: 0;
     padding: 40px 20px 56px 20px;
-    background-color: var(--gris-clair);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='%23ececec'%3E%3Cpath d='M0 0h40A40 40 0 0 1 0 40Z'/%3E%3Crect x='48' width='64' height='40' rx='20'/%3E%3Cpath d='M160 40h-40A40 40 0 0 1 160 0Z'/%3E%3Ccircle cx='20' cy='60' r='20'/%3E%3Cpath d='M80 40q0 20 20 20-20 0-20 20 0-20-20-20 20 0 20-20Z'/%3E%3Crect x='120' y='48' width='40' height='64' rx='20'/%3E%3Cpath d='M0 80h40A40 40 0 0 1 0 120Z'/%3E%3Ccircle cx='80' cy='100' r='20'/%3E%3Cpath d='M40 160v-40a40 40 0 0 1 40 40Z'/%3E%3Crect x='96' y='120' width='64' height='40' rx='20'/%3E%3C/g%3E%3C/svg%3E");
+    background-color: var(--noir);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='%23151515'%3E%3Cpath d='M0 0h40A40 40 0 0 1 0 40Z'/%3E%3Crect x='48' width='64' height='40' rx='20'/%3E%3Cpath d='M160 40h-40A40 40 0 0 1 160 0Z'/%3E%3Ccircle cx='20' cy='60' r='20'/%3E%3Cpath d='M80 40q0 20 20 20-20 0-20 20 0-20-20-20 20 0 20-20Z'/%3E%3Crect x='120' y='48' width='40' height='64' rx='20'/%3E%3Cpath d='M0 80h40A40 40 0 0 1 0 120Z'/%3E%3Ccircle cx='80' cy='100' r='20'/%3E%3Cpath d='M40 160v-40a40 40 0 0 1 40 40Z'/%3E%3Crect x='96' y='120' width='64' height='40' rx='20'/%3E%3C/g%3E%3C/svg%3E");
     background-size: 160px 160px;
     color: var(--texte);
     font-family: var(--courant);
@@ -86,11 +90,11 @@
     letter-spacing: -0.005em;
     line-height: 1.08;
     margin: 0 0 10px 0;
-    color: var(--noir);
+    color: var(--blanc);
   }
   .page-header p {
     margin: 0;
-    color: var(--texte-faible);
+    color: var(--sur-sombre);
     font-size: 13px;
   }
   .date-nav {
@@ -160,8 +164,8 @@
 
   /* ── Niveau 1 : la journée ───────────────────────────────────────────── */
   .day-entry {
-    background: var(--blanc);
-    border: 1px solid var(--bord);
+    background: var(--gris-clair);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: var(--rayon);
     margin-bottom: 24px;
     padding: 22px 0 0 0;
@@ -253,9 +257,10 @@
   .item {
     border: 1px solid var(--bord);
     border-radius: var(--rayon-petit);
-    padding: 16px 18px 14px 18px;
-    margin-bottom: 14px;
+    padding: 18px 20px 16px 20px;
+    margin-bottom: 18px;
     background: var(--blanc);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
   }
   .item:last-child { margin-bottom: 4px; }
   .item-title {
@@ -268,7 +273,7 @@
 
   /* ── Niveau 6 : le résumé, encart gris à filet coloré ────────────────── */
   .item-text {
-    background: var(--gris-clair);
+    background: #eeeeee;
     border-left: 4px solid var(--bleu);
     border-radius: 0 var(--rayon-petit) var(--rayon-petit) 0;
     padding: 12px 16px;
@@ -318,7 +323,7 @@
     max-width: 760px;
     margin: 20px auto 0 auto;
     font-size: 11.5px;
-    color: var(--texte-faible);
+    color: var(--sur-sombre);
     text-align: center;
   }</style>
 </head>
