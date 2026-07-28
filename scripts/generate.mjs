@@ -176,12 +176,10 @@ RÈGLES
 - Traduis les titres anglais en français.
 - Ton informatif et pragmatique, sans superlatifs.
 
-SYNTHÈSE : 4 à 6 puces courtes couvrant l'ensemble des thèmes retenus, en priorisant SEO/GEO et IA, puis le marché francophone.
-
-ACTIONS : 3 à 5 actions contextualisées pour l'enseignement supérieur privé (funnel étudiant, Parcoursup, journées portes ouvertes, fiches Google Business Profile des campus, refontes de site, campagnes de rentrée). Chaque action doit découler d'un article que tu as retenu. Commence chaque action par un verbe à l'infinitif : « Auditer… », « Vérifier… », « Planifier… ».
+SYNTHÈSE : 4 à 6 puces courtes couvrant l'ensemble des thèmes retenus, en priorisant SEO/GEO et IA, puis le marché francophone. Elles doivent être lisibles seules, sans avoir à parcourir le détail.
 
 FORMAT — réponds uniquement par ce JSON, sans texte autour ni bloc de code :
-{"synthese":["..."],"themes":{"seo":[{"id":12,"titre":"Titre court","texte":"2-3 phrases."}],"ia":[],"sea":[],"ga4":[],"ux":[]},"actions":["..."]}
+{"synthese":["..."],"themes":{"seo":[{"id":12,"titre":"Titre court","texte":"2-3 phrases."}],"ia":[],"sea":[],"ga4":[],"ux":[]}}
 
 Le champ "id" doit reprendre exactement le numéro entre crochets de l'article. N'écris jamais d'URL : les liens sont ajoutés automatiquement.
 
@@ -226,10 +224,6 @@ ${corps}
     .slice(0, 6)
     .map((p) => `          <li>${echapper(p)}</li>`)
     .join('\n');
-  const actions = (plan.actions || [])
-    .slice(0, 5)
-    .map((a) => `          <li>${echapper(a)}</li>`)
-    .join('\n');
 
   const html = `<div class="day-entry" data-date="${date.iso}" data-label="${date.label}">
     <div class="day-banner">${date.label}</div>
@@ -243,13 +237,6 @@ ${puces}
       </div>
 
 ${blocsThemes}
-
-      <div class="actions-block">
-        <p class="actions-title">Actions potentielles à réaliser</p>
-        <ul class="actions-list">
-${actions}
-        </ul>
-      </div>
 
     </div>
   </div>`;
