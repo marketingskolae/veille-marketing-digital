@@ -28,6 +28,13 @@ if (!API_KEY) {
   process.exit(1);
 }
 
+// Une erreur d'API doit produire un message lisible et un code de sortie franc,
+// pas une trace de pile suivie d'une assertion libuv.
+process.on('unhandledRejection', (err) => {
+  console.error('\nÉchec : ' + (err?.message || err));
+  process.exit(1);
+});
+
 // ---------------------------------------------------------------------------
 // Date du jour, heure de Paris
 // ---------------------------------------------------------------------------
@@ -337,6 +344,7 @@ function injectEntry(html, fragment, iso) {
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
+try {
 const date = parisDate();
 const current = readFileSync(INDEX, 'utf8');
 const history = readHistory(current);
@@ -388,3 +396,10 @@ writeFileSync(INDEX, updated, 'utf8');
 console.log(
   `index.html mis à jour — ${(updated.match(/class="day-entry"/g) || []).length} jour(s) d'historique.`
 );
+} catch (err) {
+  console.error('\nÉchec : ' + (err?.message || err));
+  // exitCode plutôt que process.exit() : couper le processus pendant que les
+  // sockets HTTP sont encore ouvertes déclenche une assertion libuv sur Windows
+  // et masque le vrai code de sortie.
+  process.exitCode = 1;
+}
