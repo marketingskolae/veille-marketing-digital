@@ -251,9 +251,20 @@ ${actions}
 // ---------------------------------------------------------------------------
 // Lecture de l'historique et insertion
 // ---------------------------------------------------------------------------
-function urlsDejaPubliees(html) {
+// L'entrée du jour est exclue de l'historique : elle va être remplacée par la
+// génération en cours. La compter reviendrait à bannir définitivement les
+// articles qu'elle contient — écartés comme « déjà publiés », puis effacés par
+// le remplacement. Le défaut se déclenche à chaque relance d'une même journée.
+function urlsDejaPubliees(html, isoDuJour) {
+  const anterieures = html
+    .split(/(?=<div class="day-entry")/)
+    .filter((bloc) => bloc.startsWith('<div class="day-entry"') && !bloc.includes(`data-date="${isoDuJour}"`))
+    .join('');
+
   return new Set(
-    [...html.matchAll(/<p class="item-source">[\s\S]*?href="([^"]+)"/g)].map((m) => normaliser(m[1]))
+    [...anterieures.matchAll(/<p class="item-source">[\s\S]*?href="([^"]+)"/g)].map((m) =>
+      normaliser(m[1])
+    )
   );
 }
 
@@ -284,7 +295,7 @@ function inserer(html, fragment, iso) {
 try {
   const date = parisDate();
   const courant = readFileSync(INDEX, 'utf8');
-  const dejaVues = urlsDejaPubliees(courant);
+  const dejaVues = urlsDejaPubliees(courant, date.iso);
 
   console.log(`Veille du ${date.label} — fournisseur : ${PROVIDER}\n`);
   console.log('Collecte des flux :');

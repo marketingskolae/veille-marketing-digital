@@ -37,7 +37,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.gate.outputs.skip != 'true'
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Générer la veille du jour
         if: steps.gate.outputs.skip != 'true'
