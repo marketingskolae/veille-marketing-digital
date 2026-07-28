@@ -145,7 +145,11 @@ function construirePrompt(date, candidats) {
       const lot = candidats.filter((c) => c.theme === cle);
       if (!lot.length) return null;
       const lignes = lot
-        .map((c) => `[${c.id}] ${c.source} (${dateCourte(c.date)}) — ${c.titre}\n    ${c.resume.slice(0, 190)}`)
+        // 400 caractères et non 190 : sur un résumé trop court, le modèle
+        // interprétait mal les titres ambigus — « Google Tag Manager UI
+        // Updates » (Google modifie son interface) devenait une consigne de
+        // mettre à jour GTM. C'est le plafond retenu par feeds.mjs.
+        .map((c) => `[${c.id}] ${c.source} (${dateCourte(c.date)}) — ${c.titre}\n    ${c.resume.slice(0, 400)}`)
         .join('\n');
       return `### ${libelle} (${lot.length})\n${lignes}`;
     })
@@ -179,7 +183,9 @@ ACTIONS : 3 à 5 actions contextualisées pour l'enseignement supérieur privé 
 FORMAT — réponds uniquement par ce JSON, sans texte autour ni bloc de code :
 {"synthese":["..."],"themes":{"seo":[{"id":12,"titre":"Titre court","texte":"2-3 phrases."}],"ia":[],"sea":[],"ga4":[],"ux":[]},"actions":["..."]}
 
-Le champ "id" doit reprendre exactement le numéro entre crochets de l'article. N'écris jamais d'URL : les liens sont ajoutés automatiquement.`;
+Le champ "id" doit reprendre exactement le numéro entre crochets de l'article. N'écris jamais d'URL : les liens sont ajoutés automatiquement.
+
+Les numéros entre crochets sont un identifiant technique. Ils ne doivent apparaître QUE dans le champ "id" — jamais dans un titre, un texte, une puce de synthèse ou une action. Écrire « (article 12) » dans une action n'aurait aucun sens pour le lecteur, qui ne voit pas cette numérotation.`;
 }
 
 // ---------------------------------------------------------------------------
