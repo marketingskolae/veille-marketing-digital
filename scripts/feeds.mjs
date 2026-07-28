@@ -41,9 +41,12 @@ export const FEEDS = [
   { nom: 'Simo Ahava', url: 'https://www.simoahava.com/index.xml', theme: 'ga4', heures: 720 },
 
   // ── UX / CRO ─────────────────────────────────────────────────────────────
+  // UX Collective a été retiré : c'est une publication de « craft » design —
+  // carrière, essais, philosophie du métier — et non une source CRO. Sur dix
+  // articles collectés, deux seulement relevaient d'une veille marketing. Le
+  // thème sera intermittent, ce qui vaut mieux qu'un thème rempli à côté.
   { nom: 'Nielsen Norman Group', url: 'https://www.nngroup.com/feed/rss/', theme: 'ux', heures: 240 },
   { nom: 'Smashing Magazine', url: 'https://www.smashingmagazine.com/feed/', theme: 'ux', heures: 240 },
-  { nom: 'UX Collective', url: 'https://uxdesign.cc/feed', theme: 'ux', heures: 72 },
 ];
 
 const UA = 'Mozilla/5.0 (compatible; VeilleMarketingBot/1.0)';
