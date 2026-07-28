@@ -274,11 +274,19 @@ function inserer(html, fragment, iso) {
   const queue = html.slice(pied);
   const corps = html.slice(debut + balise.length, pied);
 
+  // `corps` contient les journées SUIVIES de la balise fermante de .entries. On
+  // la retire une fois pour toutes, avant le découpage : chaque morceau est
+  // alors une journée complète et correctement fermée.
+  //
+  // La version précédente retirait puis rajoutait une fermeture sur chaque
+  // morceau. Correct pour toutes les journées sauf la dernière, qui portait
+  // aussi la fermeture de .entries : elle gagnait un </div> orphelin à chaque
+  // exécution, donc un par jour.
   const existantes = corps
+    .replace(/<\/div>\s*$/, '')
     .split(/(?=<div class="day-entry")/)
     .map((s) => s.trim())
-    .filter((s) => s.startsWith('<div class="day-entry"'))
-    .map((s) => s.replace(/<\/div>\s*$/, '').trimEnd() + '\n  </div>');
+    .filter((s) => s.startsWith('<div class="day-entry"'));
 
   const autres = existantes.filter((e) => !e.includes(`data-date="${iso}"`)).slice(0, MAX_DAYS - 1);
   const entrees = [fragment, ...autres].map((e) => '\n  ' + e.trim()).join('\n');
