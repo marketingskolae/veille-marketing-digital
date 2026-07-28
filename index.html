@@ -6,17 +6,52 @@
 <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
 <title>Veille Marketing Digital Quotidienne</title>
 <style>
+  /* ------------------------------------------------------------------------
+     Charte Campus SKOLAE 2026
+
+     Couleurs principales : Noir #000000 · Jaune #FFF388 · Blanc #FFFFFF
+                            Gris clair #F4F4F4 · Gris 2 #393939 · Gris 1 #272727
+     Secondaires          : Bleu #ABDAEE · Mauve #E8C9FF · Orange #EBC5B0
+                            Vert #9BDEBD
+     Principes            : angles arrondis de petit rayon, aplats de couleur
+                            avec parcimonie, la couleur surligne un bloc.
+
+     GT Walsheim et Basier Circle sont des polices sous licence commerciale :
+     elles ne peuvent pas être hébergées sur ce dépôt public. Les piles
+     ci-dessous les utilisent si elles sont installées sur le poste, sinon
+     elles retombent sur une linéale géométrique système. Pour un rendu fidèle,
+     déposer les .woff2 sous /fonts et ajouter les @font-face correspondants.
+     ------------------------------------------------------------------------ */
   :root {
     color-scheme: light;
-    --ink: #24262b;
-    --ink-soft: #454852;
-    --ink-faint: #8b8e98;
-    --paper: #fbfaf8;
-    --card: #ffffff;
-    --line: #e8e6e0;
-    --accent: #35519c;
-    --accent-soft: #eef2fb;
-    --accent-line: #d3ddf3;
+    --noir: #000000;
+    --jaune: #fff388;
+    --blanc: #ffffff;
+    --gris-clair: #f4f4f4;
+    --gris-2: #393939;
+    --gris-1: #272727;
+    --bleu: #abdaee;
+    --mauve: #e8c9ff;
+    --orange: #ebc5b0;
+    --vert: #9bdebd;
+
+    --ink: var(--gris-1);
+    --ink-soft: var(--gris-2);
+    /* Gris faible non defini par la charte : derive au niveau le plus clair qui
+       reste conforme WCAG AA (4,5:1) sur les DEUX fonds de la charte, blanc et
+       gris clair. #8a8a8a plafonnait a 3,14:1 sur gris clair. */
+    --ink-faint: #6e6e6e;
+    --paper: var(--gris-clair);
+    --card: var(--blanc);
+    --line: #e2e2e2;
+
+    --titrage: "GT Walsheim Condensed", "GT Walsheim Pro", "Basier Circle",
+      -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --courant: "Basier Circle", -apple-system, BlinkMacSystemFont, "Segoe UI",
+      "Helvetica Neue", Arial, sans-serif;
+
+    --rayon: 8px;
+    --rayon-petit: 5px;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -28,25 +63,30 @@
     padding: 32px 20px 48px 20px;
     background: var(--paper);
     color: var(--ink);
-    font-family: "Iowan Old Style", "Georgia", "Charter", -apple-system, BlinkMacSystemFont, "Segoe UI", serif;
+    font-family: var(--courant);
     line-height: 1.55;
   }
   .page-header {
     max-width: 720px;
     margin: 0 auto 22px auto;
   }
+  /* Titre principal : GT Walsheim Condensed Black Oblique, en capitales.
+     La charte réserve ce traitement au titre principal — nulle part ailleurs. */
   .page-header h1 {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    font-size: 25px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    margin: 0 0 6px 0;
-    color: var(--ink);
+    font-family: var(--titrage);
+    font-size: 30px;
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: -0.005em;
+    line-height: 1.1;
+    margin: 0 0 8px 0;
+    color: var(--noir);
   }
   .page-header p {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-family: var(--courant);
     margin: 0;
-    color: var(--ink-faint);
+    color: var(--ink-soft);
     font-size: 13px;
     letter-spacing: 0.01em;
   }
@@ -59,20 +99,20 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(6px);
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: var(--rayon);
     padding: 10px 14px;
-    box-shadow: 0 2px 10px rgba(20, 20, 15, 0.05);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
+  /* Information de type catégorie : Basier Circle Medium en capitales. */
   .date-nav label {
-    font-size: 11.5px;
-    color: var(--ink-faint);
-    font-weight: 600;
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.07em;
   }
   .date-nav select {
     flex: 1;
@@ -80,12 +120,12 @@
     font-family: inherit;
     padding: 7px 10px;
     border: 1px solid var(--line);
-    border-radius: 7px;
-    background: var(--paper);
+    border-radius: var(--rayon-petit);
+    background: var(--blanc);
     color: var(--ink);
   }
   .date-nav select:focus {
-    outline: 2px solid var(--accent-line);
+    outline: 2px solid var(--jaune);
     outline-offset: 1px;
   }
   .date-nav button {
@@ -93,20 +133,20 @@
     line-height: 1;
     font-family: inherit;
     border: 1px solid var(--line);
-    background: var(--paper);
+    background: var(--blanc);
     color: var(--ink);
-    border-radius: 7px;
+    border-radius: var(--rayon-petit);
     width: 32px;
     height: 32px;
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease;
   }
   .date-nav button:hover:not(:disabled) {
-    background: var(--accent-soft);
-    border-color: var(--accent-line);
+    background: var(--jaune);
+    border-color: var(--noir);
   }
   .date-nav button:disabled {
-    opacity: 0.35;
+    opacity: 0.3;
     cursor: default;
   }
   .entries {
@@ -116,172 +156,146 @@
   .day-entry {
     background: var(--card);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: var(--rayon);
     margin-bottom: 24px;
     overflow: hidden;
-    box-shadow: 0 1px 2px rgba(20, 20, 15, 0.04), 0 6px 20px rgba(20, 20, 15, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
+  /* Bandeau noir / texte blanc : le contraste Master Logo de la charte. */
   .day-banner {
-    background: var(--ink);
-    color: #ffffff;
-    padding: 13px 24px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    font-size: 12.5px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
+    background: var(--noir);
+    color: var(--blanc);
+    padding: 14px 24px;
+    font-family: var(--courant);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
   }
   .day-body {
-    padding: 22px 26px 24px 26px;
+    padding: 24px 26px 26px 26px;
   }
+  /* « Utilisation de la couleur pour surligner un bloc » : le jaune de marque
+     en aplat, réservé à la synthèse — le seul bloc mis en avant de la page. */
   .synthesis-block {
-    background: var(--accent-soft);
-    border: 1px solid var(--accent-line);
-    border-left: 3px solid var(--accent);
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 26px;
+    background: var(--jaune);
+    border-radius: var(--rayon-petit);
+    padding: 18px 22px;
+    margin-bottom: 28px;
   }
   .synthesis-title {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--accent);
-    margin: 0 0 10px 0;
+    font-family: var(--courant);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--noir);
+    margin: 0 0 12px 0;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.09em;
   }
   .synthesis-list {
     margin: 0;
-    padding-left: 20px;
+    padding-left: 18px;
   }
   .synthesis-list li {
     font-size: 14.5px;
-    line-height: 1.55;
-    color: #2c3554;
-    margin-bottom: 8px;
+    line-height: 1.5;
+    color: var(--noir);
+    margin-bottom: 9px;
   }
-  .synthesis-list li::marker {
-    color: var(--accent);
-  }
-  .synthesis-list li:last-child {
-    margin-bottom: 0;
-  }
+  .synthesis-list li::marker { color: var(--noir); }
+  .synthesis-list li:last-child { margin-bottom: 0; }
   .theme-block {
-    padding: 20px 0;
+    padding: 22px 0;
     border-bottom: 1px solid var(--line);
   }
-  .theme-block:first-of-type {
-    padding-top: 0;
-  }
+  .theme-block:first-of-type { padding-top: 0; }
   .theme-block:last-child {
     border-bottom: none;
     padding-bottom: 0;
   }
   .theme-title {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--accent);
-    margin: 0 0 14px 0;
+    font-family: var(--courant);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--noir);
+    margin: 0 0 16px 0;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.09em;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
   }
+  /* Pastilles : les 4 couleurs secondaires distinguent les thèmes sans jamais
+     devenir un aplat — « aplats de couleurs à utiliser avec parcimonie ». */
   .theme-title::before {
     content: "";
     display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    background: var(--bleu);
+    flex: none;
   }
+  /* Décalage volontaire : nth-of-type compte tous les div frères, et
+     .synthesis-block occupe la position 1. Les cinq thèmes sont donc en
+     positions 2 à 6. Le cinquième reçoit le noir, la charte ne comptant que
+     quatre couleurs secondaires — et le jaune reste réservé au surlignage. */
+  .theme-block:nth-of-type(3) .theme-title::before { background: var(--mauve); }
+  .theme-block:nth-of-type(4) .theme-title::before { background: var(--orange); }
+  .theme-block:nth-of-type(5) .theme-title::before { background: var(--vert); }
+  .theme-block:nth-of-type(6) .theme-title::before { background: var(--noir); }
   .item {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
     padding-left: 2px;
   }
-  .item:last-child {
-    margin-bottom: 0;
-  }
+  .item:last-child { margin-bottom: 0; }
   .item-title {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-family: var(--courant);
     font-size: 15.5px;
-    font-weight: 650;
-    color: var(--ink);
-    margin: 0 0 5px 0;
+    font-weight: 600;
+    color: var(--noir);
+    margin: 0 0 6px 0;
     line-height: 1.35;
   }
   .item-text {
-    font-size: 15px;
-    line-height: 1.65;
+    font-size: 14.5px;
+    line-height: 1.6;
     color: var(--ink-soft);
-    margin: 0 0 6px 0;
+    margin: 0 0 7px 0;
   }
   .item-source {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-family: var(--courant);
     font-size: 12.5px;
     color: var(--ink-faint);
+    margin: 0;
   }
+  /* Le lien est surligné au jaune de marque, pas coloré : la charte n'emploie
+     jamais le jaune comme couleur de texte — son contraste serait insuffisant. */
   .item-source a {
-    color: var(--accent);
+    color: var(--ink);
     text-decoration: none;
-    border-bottom: 1px solid var(--accent-line);
-    padding-bottom: 1px;
-    transition: border-color 0.15s ease;
+    box-shadow: inset 0 -0.5em 0 var(--jaune);
+    padding: 0 1px;
+    transition: box-shadow 0.15s ease;
   }
   .item-source a:hover {
-    border-color: var(--accent);
+    box-shadow: inset 0 -1em 0 var(--jaune);
   }
   .empty-theme {
     font-size: 14px;
     color: var(--ink-faint);
     font-style: italic;
-  }
-  .actions-block {
-    background: #f0f7f1;
-    border: 1px solid #cfe6d3;
-    border-left: 3px solid #2f7a4a;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-top: 22px;
-  }
-  .actions-title {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #2f7a4a;
-    margin: 0 0 10px 0;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .actions-list {
     margin: 0;
-    padding-left: 20px;
-  }
-  .actions-list li {
-    font-size: 14.5px;
-    line-height: 1.55;
-    color: #234a30;
-    margin-bottom: 8px;
-  }
-  .actions-list li::marker {
-    color: #2f7a4a;
-  }
-  .actions-list li:last-child {
-    margin-bottom: 0;
   }
   .footer-note {
     max-width: 720px;
     margin: 16px auto 0 auto;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-family: var(--courant);
     font-size: 11.5px;
     color: var(--ink-faint);
     text-align: center;
     letter-spacing: 0.01em;
-  }
-</style>
+  }</style>
 </head>
 <body>
 
