@@ -98,7 +98,7 @@ async function appelerModele(prompt) {
     body: JSON.stringify({
       model: process.env.GITHUB_MODEL || 'openai/gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
+      temperature: 0.15,
       max_tokens: 4000,
     }),
   });
@@ -166,11 +166,25 @@ Sélectionne les plus pertinents et rédige la veille du jour.
 
 MÉTHODE — traite les 5 thèmes un par un, dans cet ordre : SEO/GEO, IA marketing, SEA/Social Ads, Analytics/GTM, UX/CRO. Pour chacun, examine les pistes du groupe correspondant ET celles du groupe « Divers ». Le regroupement ci-dessus est indicatif : un article classé en SEO peut relever de l'IA, et inversement — c'est à toi de trancher selon son sujet réel.
 
-VOLUME ATTENDU — retiens 10 à 16 articles au total, soit 2 à 4 par thème. C'est une veille quotidienne destinée à être lue en cinq minutes : en dessous de 10 articles elle est trop maigre pour être utile, au-delà de 16 elle devient indigeste. Tu disposes de ${candidats.length} candidats : sélectionne sévèrement, mais sélectionne.
+PÉRIMÈTRE DE CHAQUE THÈME — un article doit relever pleinement du thème où tu le places :
+- SEO / GEO : référencement naturel, indexation, crawl, performance technique, algorithmes et pénalités, AI Overviews et AI Mode, citations de marque dans ChatGPT / Perplexity / Gemini, Search Console.
+- IA appliquée au marketing digital : usage de l'IA dans le travail marketing — production et contrôle de contenu, automatisation, agents, mesure de la visibilité IA — et annonces de modèles ayant un effet direct sur ce travail.
+- SEA / Social Ads : campagnes payantes sur Google Ads, Meta, LinkedIn, TikTok, Microsoft Ads — formats, enchères, ciblage, mesure, règles de diffusion.
+- Google Analytics / GTM : mesure et tracking — GA4, Tag Manager, attribution, consentement, tracking serveur.
+- UX Design / CRO : ergonomie, design d'interface, parcours, recherche utilisateur, tests A/B, optimisation du taux de conversion.
+
+RÈGLE DE SÉLECTION — la pertinence prime sur le volume, toujours.
+Pose-toi la question pour chaque article : « un Responsable Marketing Digital le rangerait-il spontanément dans ce thème ? » Si la réponse est non, ou si tu dois forcer le raisonnement pour l'y faire entrer, écarte-le. Ne loge jamais un article dans le thème le moins mal adapté : s'il ne relève clairement d'aucun des cinq périmètres ci-dessus, il n'a pas sa place dans la veille.
+
+Un thème vide est un résultat correct et fréquent — certaines journées n'apportent rien en Analytics ou en UX. Une édition de 5 articles justes vaut mieux qu'une de 12 dont la moitié est hors sujet : le lecteur perd confiance dès le premier article mal classé.
+
+Sont notamment à écarter, même publiés par une source de référence : les listes de formations ou d'outils, les pages d'avis sur un produit, les actualités d'entreprise, la cybersécurité, les levées de fonds, et tout contenu promotionnel.
+
+VOLUME — au maximum 4 articles par thème, 16 au total, et aucun minimum imposé.
+
+Repère de calibrage, à ne pas confondre avec un quota : sur ${candidats.length} candidats, une édition juste en retient habituellement 8 à 12. Si tu descends sous 6, reprends les articles écartés et vérifie que tu n'as pas confondu « ne relève pas du thème » avec « sujet que je trouve mineur » — un article pleinement dans le périmètre se retient même s'il n'est pas spectaculaire. À l'inverse, si tu dépasses 14, tu as probablement laissé passer des articles en forçant leur classement.
 
 RÈGLES
-- Ne laisse un thème vide que si rien ne s'en approche vraiment : c'est alors un résultat honnête, mais vérifie d'abord le groupe « Divers ».
-- Écarte ce qui n'a pas d'application marketing concrète (actualité tech générale, cybersécurité, levées de fonds, faits divers).
 - Un même article ne peut apparaître que dans un seul thème.
 - Rédige 2 à 3 phrases factuelles par article, à partir du titre et du résumé fournis. N'invente aucun chiffre, aucune date, aucun fait absent du résumé. Si le résumé est trop maigre pour être factuel, n'utilise pas cet article.
 - Traduis les titres anglais en français.
@@ -352,11 +366,14 @@ try {
     console.log(`\n${retenus} article(s) retenu(s) par le modèle.`);
 
     if (retenus < 3) {
-      console.error(
-        `Seulement ${retenus} article(s) exploitable(s) — publication annulée pour ne pas ` +
-          "dégrader le site. index.html n'a pas été modifié."
+      // Journée creuse : ce n'est pas une panne. Sortir en erreur ferait rougir
+      // le workflow chaque jour sans actualité, et on finirait par ignorer les
+      // vrais échecs. On publie rien, on le dit, et on sort proprement.
+      console.warn(
+        `Seulement ${retenus} article(s) retenu(s) — pas assez pour une édition. ` +
+          "index.html n'a pas été modifié. Ce n'est pas une erreur : certaines " +
+          'journées n\'apportent rien de pertinent.'
       );
-      process.exitCode = 1;
     } else if (DRY_RUN) {
       console.log('\n--- DRY RUN, index.html non modifié ---\n');
       console.log(fragment);
