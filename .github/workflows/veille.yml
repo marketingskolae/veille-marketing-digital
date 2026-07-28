@@ -10,7 +10,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write   # pousser la veille du jour
+  models: read      # inférence via GitHub Models (gratuit, aucune clé à gérer)
 
 concurrency:
   group: veille
@@ -41,7 +42,7 @@ jobs:
       - name: Générer la veille du jour
         if: steps.gate.outputs.skip != 'true'
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/generate.mjs
 
       - name: Publier
@@ -49,7 +50,7 @@ jobs:
         run: |
           git config user.name "Veille automatique"
           git config user.email "action@github.com"
-          git add index.html sources-candidates.md 2>/dev/null || git add index.html
+          git add index.html
           if git diff --staged --quiet; then
             echo "Aucun changement — rien à publier aujourd'hui."
             exit 0

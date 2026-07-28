@@ -2,38 +2,40 @@
 // Génère la veille marketing digital du jour et l'insère dans index.html.
 // Aucune dépendance npm : Node 20+ (fetch natif).
 //
+// Principe : les articles proviennent exclusivement des flux RSS déclarés dans
+// feeds.mjs. Le modèle ne cherche rien — il trie, hiérarchise et rédige. Il ne
+// manipule jamais d'URL : il désigne les articles par leur numéro, et le script
+// recompose les liens depuis la collecte. Une source inventée est donc
+// impossible par construction, pas seulement improbable.
+//
 // Variables d'environnement :
-//   GEMINI_API_KEY  (obligatoire)
-//   GEMINI_MODEL    (optionnel, défaut gemini-3.6-flash)
-//   DEBUG_RAW=1     écrit la réponse brute de l'API dans debug-response.json
-//   DRY_RUN=1       n'écrit pas index.html, affiche seulement le résultat
+//   GITHUB_TOKEN     fourni automatiquement par GitHub Actions (gratuit)
+//   GEMINI_API_KEY   alternative si PROVIDER=gemini
+//   PROVIDER         'github' (défaut) ou 'gemini'
+//   DRY_RUN=1        n'écrit pas index.html, affiche le résultat
+//   DEBUG_RAW=1      écrit la réponse brute du modèle dans debug-response.json
 
-import { readFileSync, writeFileSync, appendFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TRUSTED_DOMAINS, classify } from './sources.mjs';
+import { collecter, normaliser } from './feeds.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const INDEX = join(ROOT, 'index.html');
-const CANDIDATES = join(ROOT, 'sources-candidates.md');
 
-const API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+const PROVIDER = process.env.PROVIDER || (process.env.GEMINI_API_KEY && !process.env.GITHUB_TOKEN ? 'gemini' : 'github');
 const DRY_RUN = process.env.DRY_RUN === '1';
 const DEBUG_RAW = process.env.DEBUG_RAW === '1';
 const MAX_DAYS = 14;
+const MAX_CANDIDATS = 55;
 
-if (!API_KEY) {
-  console.error('GEMINI_API_KEY manquante.');
-  process.exit(1);
-}
-
-// Une erreur d'API doit produire un message lisible et un code de sortie franc,
-// pas une trace de pile suivie d'une assertion libuv.
-process.on('unhandledRejection', (err) => {
-  console.error('\nÉchec : ' + (err?.message || err));
-  process.exit(1);
-});
+const THEMES = [
+  { cle: 'seo', titre: 'SEO / GEO' },
+  { cle: 'ia', titre: 'IA appliquée au marketing digital' },
+  { cle: 'sea', titre: 'SEA / Social Ads' },
+  { cle: 'ga4', titre: 'Google Analytics / GTM' },
+  { cle: 'ux', titre: 'UX Design / CRO' },
+];
 
 // ---------------------------------------------------------------------------
 // Date du jour, heure de Paris
@@ -41,365 +43,306 @@ process.on('unhandledRejection', (err) => {
 function parisDate() {
   const now = new Date();
   const iso = new Intl.DateTimeFormat('fr-CA', {
-    timeZone: 'Europe/Paris',
-    year: 'numeric', month: '2-digit', day: '2-digit',
+    timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(now);
-
   const label = new Intl.DateTimeFormat('fr-FR', {
-    timeZone: 'Europe/Paris',
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   }).format(now);
+  return { iso, label: label.charAt(0).toUpperCase() + label.slice(1) };
+}
 
-  return {
-    iso,
-    label: label.charAt(0).toUpperCase() + label.slice(1),
-    fr: iso.split('-').reverse().join('/'),
-  };
+function dateCourte(d) {
+  return new Intl.DateTimeFormat('fr-FR', {
+    timeZone: 'Europe/Paris', day: 'numeric', month: 'long',
+  }).format(d);
+}
+
+function echapper(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // ---------------------------------------------------------------------------
-// Mémoire des jours précédents — base de l'anti-doublon
+// Appel du modèle
 // ---------------------------------------------------------------------------
-function readHistory(html) {
-  const urls = new Set(
-    [...html.matchAll(/<p class="item-source">[\s\S]*?href="([^"]+)"/g)].map((m) => m[1])
-  );
-  const titles = [...html.matchAll(/<p class="item-title">([\s\S]*?)<\/p>/g)].map((m) =>
-    m[1].replace(/<[^>]+>/g, '').replace(/&[a-z]+;/g, ' ').trim()
-  );
-  // Normalisation d'URL : on compare sans paramètres ni slash final, pour qu'un
-  // même article référencé différemment soit bien vu comme un doublon.
-  const norm = new Set(
-    [...urls].map((u) => {
-      try {
-        const p = new URL(u);
-        return (p.hostname.replace(/^www\./, '') + p.pathname).replace(/\/$/, '').toLowerCase();
-      } catch {
-        return u.toLowerCase();
-      }
-    })
-  );
-  return { urls: norm, titles };
-}
-
-// ---------------------------------------------------------------------------
-// Prompt
-// ---------------------------------------------------------------------------
-function buildPrompt({ iso, label }, history) {
-  const covered = history.titles.length
-    ? history.titles.slice(0, 60).map((t) => `- ${t}`).join('\n')
-    : '(aucun historique, première édition)';
-
-  return `Tu es le coach expert marketing digital d'une équipe marketing de l'enseignement supérieur privé, pilotée par un Responsable Marketing Digital de 10 ans d'expérience (écoles en informatique, commerce, immobilier, communication, journalisme, cinéma, design — BTS, Bachelor, Mastère).
-
-Nous sommes le ${label}. Produis la veille marketing digital du jour.
-
-═══ ÉTAPE 1 — RECHERCHE ═══
-Recherche sur Google les actualités des dernières 24 à 48 heures pour ces 5 thèmes, dans cet ordre de priorité strict :
-1. SEO technique/on-page et GEO/AISEO (visibilité dans ChatGPT, Perplexity, Gemini, AI Overviews)
-2. IA appliquée au marketing digital
-3. SEA / Social Ads (Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads, Microsoft Ads)
-4. Google Analytics / GTM / tracking / attribution
-5. UX design / CRO
-
-Ignore les actualités trop générales sans application marketing concrète.
-
-═══ EXIGENCE DE QUALITÉ DES SOURCES ═══
-Le critère n'est pas une liste fermée, c'est la réputation réelle auprès des praticiens du secteur. Une source est acceptable si un Responsable Marketing Digital expérimenté la citerait sans hésiter en réunion.
-
-Sont acceptables : la documentation et les blogs officiels des plateformes ; les médias spécialisés de référence ; les études méthodologiquement sérieuses d'éditeurs d'outils ; les experts individuels faisant autorité sur leur domaine.
-
-Sont exclus sans exception : les fils de communiqués de presse, les contenus sponsorisés ou publi-rédactionnels, les agrégateurs, les réseaux sociaux et forums, les blogs d'agence à visée commerciale, tout contenu manifestement produit en masse par IA.
-
-Voici le référentiel actuellement approuvé — c'est ton point de départ, pas ta limite :
-${TRUSTED_DOMAINS.map((d) => `- ${d}`).join('\n')}
-
-Si tu identifies une source hors de ce référentiel qui satisfait réellement le critère de réputation, cite-la : elle sera soumise à validation humaine. Mais en cas de doute sur la fiabilité, exclus l'information plutôt que de l'inclure. Une veille courte et sûre vaut mieux qu'une veille fournie et douteuse.
-
-═══ INTERDICTION DE DOUBLON ═══
-Ces sujets ont déjà été traités dans les éditions précédentes. Tu ne dois PAS les reprendre :
-${covered}
-
-Un sujet est un doublon s'il porte sur la même annonce, la même étude ou le même fait, même reformulé ou vu par une autre source. Un vrai développement nouveau sur un sujet déjà traité est en revanche légitime : dans ce cas, dis explicitement ce qui est nouveau depuis la dernière fois.
-
-═══ ÉTAPE 2 — RÉDACTION ═══
-Pour chaque thème ayant au moins une actualité pertinente : 2 à 4 items maximum. Chacun : titre court, 2-3 phrases factuelles (chiffres, dates et noms exacts), source avec lien direct vers l'article précis (jamais vers une page d'accueil ou de catégorie).
-Ton informatif, pragmatique, sans superlatifs. Aucune information incertaine ou spéculative. Aucune URL inventée : chaque lien doit provenir de tes résultats de recherche.
-Si un thème n'a rien de pertinent et non-doublon, mets exactement : <p class="empty-theme">Rien de significatif aujourd'hui</p>
-
-Synthèse : 4 à 6 puces courtes, priorisant SEO/GEO et IA à information équivalente, avec priorité additionnelle au marché francophone.
-
-Actions : 3 à 5 actions concrètes à l'impératif, contextualisées pour l'enseignement supérieur privé (funnel étudiant, Parcoursup, journées portes ouvertes, fiches Google Business Profile des campus, refontes de site, campagnes de rentrée). Chaque action doit découler d'au moins une actualité citée au-dessus.
-
-═══ ÉTAPE 3 — FORMAT ═══
-Réponds UNIQUEMENT avec un fragment HTML : pas de texte avant ni après, pas de bloc de code markdown, pas de balise <style> ni <script>.
-
-<div class="day-entry" data-date="${iso}" data-label="${label}">
-  <div class="day-banner">${label}</div>
-  <div class="day-body">
-    <div class="synthesis-block">
-      <p class="synthesis-title">Synthèse du jour</p>
-      <ul class="synthesis-list"><li>…</li></ul>
-    </div>
-    <div class="theme-block">
-      <p class="theme-title">SEO / GEO</p>
-      <div class="item">
-        <p class="item-title">…</p>
-        <p class="item-text">…</p>
-        <p class="item-source">Source : <a href="URL" target="_blank" rel="noopener">Nom de la source, date</a></p>
-      </div>
-    </div>
-    <div class="theme-block"><p class="theme-title">IA appliquée au marketing digital</p>…</div>
-    <div class="theme-block"><p class="theme-title">SEA / Social Ads</p>…</div>
-    <div class="theme-block"><p class="theme-title">Google Analytics / GTM</p>…</div>
-    <div class="theme-block"><p class="theme-title">UX Design / CRO</p>…</div>
-    <div class="actions-block">
-      <p class="actions-title">Actions potentielles à réaliser</p>
-      <ul class="actions-list"><li>…</li></ul>
-    </div>
-  </div>
-</div>
-
-Les 5 theme-block doivent apparaître dans cet ordre exact, même vides. Encode les caractères spéciaux en entités HTML (&amp;, &gt;, &lt;).`;
-}
-
-// ---------------------------------------------------------------------------
-// Appel API
-// ---------------------------------------------------------------------------
-async function callGemini(prompt) {
-  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
-    method: 'POST',
-    headers: { 'x-goog-api-key': API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: MODEL,
-      input: prompt,
-      tools: [{ type: 'google_search' }],
-    }),
-  });
-
-  const body = await res.text();
-  if (!res.ok) throw new Error(`API Gemini ${res.status} : ${body.slice(0, 2000)}`);
-
-  const json = JSON.parse(body);
-  if (DEBUG_RAW) {
-    writeFileSync(join(ROOT, 'debug-response.json'), JSON.stringify(json, null, 2));
-    console.log('Réponse brute écrite dans debug-response.json');
+async function appelerModele(prompt) {
+  if (PROVIDER === 'gemini') {
+    const cle = process.env.GEMINI_API_KEY;
+    if (!cle) throw new Error('PROVIDER=gemini mais GEMINI_API_KEY est absente.');
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
+      method: 'POST',
+      headers: { 'x-goog-api-key': cle, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: process.env.GEMINI_MODEL || 'gemini-3.6-flash', input: prompt }),
+    });
+    const corps = await res.text();
+    if (!res.ok) throw new Error(`Gemini ${res.status} : ${corps.slice(0, 500)}`);
+    return extraireTexte(JSON.parse(corps));
   }
-  return json;
-}
 
-// La forme de la réponse diffère entre l'API Interactions et generateContent.
-// On collecte les fragments de texte du modèle en écartant les blocs de
-// raisonnement (thought), puis on retombe sur un parcours générique si besoin.
-function extractText(json) {
-  const chunks = [];
-  const walk = (node) => {
-    if (node === null || typeof node !== 'object') return;
-    if (Array.isArray(node)) return node.forEach(walk);
-    if (node.thought === true) return;
-    if (typeof node.text === 'string' && node.text.trim()) chunks.push(node.text);
-    for (const value of Object.values(node)) walk(value);
-  };
-
-  const direct =
-    json?.candidates?.[0]?.content?.parts ??
-    json?.model_output?.content?.parts ??
-    json?.output?.content?.parts;
-  if (Array.isArray(direct)) direct.forEach(walk);
-  if (!chunks.length && typeof json?.output_text === 'string') chunks.push(json.output_text);
-  if (!chunks.length) walk(json);
-
-  return chunks.join('').trim();
-}
-
-// ---------------------------------------------------------------------------
-// Filtrage : qualité de source + anti-doublon
-// ---------------------------------------------------------------------------
-function stripFences(text) {
-  return text.replace(/^\s*```(?:html)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
-}
-
-function normalizeUrl(u) {
-  try {
-    const p = new URL(u);
-    return (p.hostname.replace(/^www\./, '') + p.pathname).replace(/\/$/, '').toLowerCase();
-  } catch {
-    return u.toLowerCase();
-  }
-}
-
-function filterItems(fragment, history) {
-  const dropped = [];
-  const candidates = [];
-  const seenToday = new Set();
-  let kept = 0;
-
-  let out = fragment.replace(
-    /<div class="item">[\s\S]*?<\/div>\s*(?=<div class="item">|<\/div>)/g,
-    (item) => {
-      const title =
-        (item.match(/<p class="item-title">([\s\S]*?)<\/p>/) || [, '(sans titre)'])[1]
-          .replace(/<[^>]+>/g, '').trim();
-      const href = (item.match(/<p class="item-source">[\s\S]*?href="([^"]+)"/) || [])[1];
-
-      if (!href) {
-        dropped.push(`${title} — aucun lien source`);
-        return '';
-      }
-
-      const verdict = classify(href);
-      if (!verdict.ok) {
-        dropped.push(`${title} — ${verdict.reason} (${verdict.host || href})`);
-        if (verdict.candidate) candidates.push({ host: verdict.host, title, href });
-        return '';
-      }
-
-      const key = normalizeUrl(href);
-      if (history.urls.has(key)) {
-        dropped.push(`${title} — déjà publié un jour précédent`);
-        return '';
-      }
-      if (seenToday.has(key)) {
-        dropped.push(`${title} — doublon dans l'édition du jour`);
-        return '';
-      }
-
-      seenToday.add(key);
-      kept += 1;
-      return item;
-    }
-  );
-
-  // Un thème vidé par le filtrage doit afficher le libellé prévu, pas un blanc.
-  out = out.replace(
-    /(<div class="theme-block">\s*<p class="theme-title">[^<]*<\/p>)(\s*)(<\/div>)/g,
-    '$1\n        <p class="empty-theme">Rien de significatif aujourd\'hui</p>\n      $3'
-  );
-
-  return { html: out, kept, dropped, candidates };
-}
-
-function logCandidates(candidates, iso) {
-  if (!candidates.length) return;
-  if (!existsSync(CANDIDATES)) {
-    writeFileSync(
-      CANDIDATES,
-      '# Sources candidates\n\n' +
-        'Sources citées par le modèle mais absentes du référentiel `scripts/sources.mjs`.\n' +
-        "Les items concernés n'ont pas été publiés. Pour approuver une source, ajoutez son\n" +
-        'domaine à `TRUSTED_DOMAINS` puis supprimez la ligne ici.\n\n',
-      'utf8'
+  const jeton = process.env.GITHUB_TOKEN;
+  if (!jeton) {
+    throw new Error(
+      'GITHUB_TOKEN absent. Dans GitHub Actions il est fourni automatiquement ; ' +
+        'en local, exportez-en un ou utilisez PROVIDER=gemini.'
     );
   }
-  const lines = candidates
-    .map((c) => `- [ ] \`${c.host}\` — ${iso} — ${c.title}\n      ${c.href}`)
+  const res = await fetch('https://models.github.ai/inference/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${jeton}`,
+      Accept: 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: process.env.GITHUB_MODEL || 'openai/gpt-4.1',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+      max_tokens: 4000,
+    }),
+  });
+  const corps = await res.text();
+  if (!res.ok) throw new Error(`GitHub Models ${res.status} : ${corps.slice(0, 500)}`);
+  const json = JSON.parse(corps);
+  if (DEBUG_RAW) writeFileSync(join(ROOT, 'debug-response.json'), JSON.stringify(json, null, 2));
+  return json?.choices?.[0]?.message?.content || '';
+}
+
+// L'API Gemini Interactions renvoie une arborescence d'étapes ; on récupère les
+// fragments de texte en écartant les blocs de raisonnement.
+function extraireTexte(json) {
+  if (DEBUG_RAW) writeFileSync(join(ROOT, 'debug-response.json'), JSON.stringify(json, null, 2));
+  const morceaux = [];
+  const parcourir = (n) => {
+    if (n === null || typeof n !== 'object') return;
+    if (Array.isArray(n)) return n.forEach(parcourir);
+    if (n.thought === true) return;
+    if (typeof n.text === 'string' && n.text.trim()) morceaux.push(n.text);
+    for (const v of Object.values(n)) parcourir(v);
+  };
+  parcourir(json?.candidates?.[0]?.content?.parts ?? json);
+  return morceaux.join('').trim();
+}
+
+// ---------------------------------------------------------------------------
+// Prompt : compact, car GitHub Models plafonne à 8 000 tokens en entrée
+// ---------------------------------------------------------------------------
+function construirePrompt(date, candidats) {
+  // Les candidats sont regroupés par thème pressenti (déduit du flux d'origine).
+  // À plat, le modèle ne voyait que le haut de la liste — dominé par les médias
+  // SEO qui publient le plus — et laissait les autres thèmes vides.
+  const groupes = [
+    { cle: 'seo', libelle: 'Pistes SEO / GEO' },
+    { cle: 'sea', libelle: 'Pistes SEA / Social Ads' },
+    { cle: 'ga4', libelle: 'Pistes Analytics / GTM' },
+    { cle: 'ux', libelle: 'Pistes UX / CRO' },
+    { cle: 'mixte', libelle: 'Divers — à répartir selon leur sujet réel (souvent IA marketing)' },
+  ];
+
+  const liste = groupes
+    .map(({ cle, libelle }) => {
+      const lot = candidats.filter((c) => c.theme === cle);
+      if (!lot.length) return null;
+      const lignes = lot
+        .map((c) => `[${c.id}] ${c.source} (${dateCourte(c.date)}) — ${c.titre}\n    ${c.resume.slice(0, 190)}`)
+        .join('\n');
+      return `### ${libelle} (${lot.length})\n${lignes}`;
+    })
+    .filter(Boolean)
+    .join('\n\n');
+
+  return `Tu es le coach expert marketing digital d'une équipe marketing de l'enseignement supérieur privé (écoles en informatique, commerce, immobilier, communication, journalisme, cinéma, design — BTS, Bachelor, Mastère). Nous sommes le ${date.label}.
+
+Voici les articles publiés récemment par les sources de référence du secteur, regroupés par thème pressenti. Aucun n'a encore été traité dans les éditions précédentes.
+
+${liste}
+
+Sélectionne les plus pertinents et rédige la veille du jour.
+
+MÉTHODE — traite les 5 thèmes un par un, dans cet ordre : SEO/GEO, IA marketing, SEA/Social Ads, Analytics/GTM, UX/CRO. Pour chacun, examine les pistes du groupe correspondant ET celles du groupe « Divers ». Le regroupement ci-dessus est indicatif : un article classé en SEO peut relever de l'IA, et inversement — c'est à toi de trancher selon son sujet réel.
+
+RÈGLES
+- Vise 2 à 4 articles par thème quand la matière existe. Ne laisse un thème vide que si rien ne s'en approche vraiment : c'est alors un résultat honnête, mais vérifie d'abord le groupe « Divers ».
+- Écarte ce qui n'a pas d'application marketing concrète (actualité tech générale, cybersécurité, levées de fonds, faits divers).
+- Un même article ne peut apparaître que dans un seul thème.
+- Rédige 2 à 3 phrases factuelles par article, à partir du titre et du résumé fournis. N'invente aucun chiffre, aucune date, aucun fait absent du résumé. Si le résumé est trop maigre pour être factuel, n'utilise pas cet article.
+- Traduis les titres anglais en français.
+- Ton informatif et pragmatique, sans superlatifs.
+
+SYNTHÈSE : 4 à 6 puces courtes couvrant l'ensemble des thèmes retenus, en priorisant SEO/GEO et IA, puis le marché francophone.
+
+ACTIONS : 3 à 5 actions contextualisées pour l'enseignement supérieur privé (funnel étudiant, Parcoursup, journées portes ouvertes, fiches Google Business Profile des campus, refontes de site, campagnes de rentrée). Chaque action doit découler d'un article que tu as retenu. Commence chaque action par un verbe à l'infinitif : « Auditer… », « Vérifier… », « Planifier… ».
+
+FORMAT — réponds uniquement par ce JSON, sans texte autour ni bloc de code :
+{"synthese":["..."],"themes":{"seo":[{"id":12,"titre":"Titre court","texte":"2-3 phrases."}],"ia":[],"sea":[],"ga4":[],"ux":[]},"actions":["..."]}
+
+Le champ "id" doit reprendre exactement le numéro entre crochets de l'article. N'écris jamais d'URL : les liens sont ajoutés automatiquement.`;
+}
+
+// ---------------------------------------------------------------------------
+// Rendu HTML : la structure est produite ici, jamais par le modèle
+// ---------------------------------------------------------------------------
+function rendre(date, plan, parId) {
+  const utilises = new Set();
+  let retenus = 0;
+
+  const blocsThemes = THEMES.map(({ cle, titre }) => {
+    const items = (plan.themes?.[cle] || [])
+      .map((it) => {
+        const src = parId.get(Number(it.id));
+        // Un id inconnu ou déjà placé ailleurs est écarté : le modèle ne peut
+        // pas faire apparaître un article qui n'était pas dans la collecte.
+        if (!src || utilises.has(src.url) || !it.titre || !it.texte) return null;
+        utilises.add(src.url);
+        retenus += 1;
+        return `        <div class="item">
+          <p class="item-title">${echapper(it.titre)}</p>
+          <p class="item-text">${echapper(it.texte)}</p>
+          <p class="item-source">Source : <a href="${echapper(src.url)}" target="_blank" rel="noopener">${echapper(src.source)}, ${dateCourte(src.date)}</a></p>
+        </div>`;
+      })
+      .filter(Boolean);
+
+    const corps = items.length
+      ? items.join('\n')
+      : `        <p class="empty-theme">Rien de significatif aujourd'hui</p>`;
+
+    return `      <div class="theme-block">
+        <p class="theme-title">${titre}</p>
+${corps}
+      </div>`;
+  }).join('\n');
+
+  const puces = (plan.synthese || [])
+    .slice(0, 6)
+    .map((p) => `          <li>${echapper(p)}</li>`)
     .join('\n');
-  appendFileSync(CANDIDATES, lines + '\n', 'utf8');
-  console.log(`${candidates.length} source(s) candidate(s) journalisée(s) dans sources-candidates.md`);
-}
+  const actions = (plan.actions || [])
+    .slice(0, 5)
+    .map((a) => `          <li>${echapper(a)}</li>`)
+    .join('\n');
 
-function validate(fragment, iso) {
-  if (/<script|<style/i.test(fragment)) {
-    throw new Error('Le fragment contient une balise <script> ou <style> — refusé.');
-  }
-  if (!fragment.startsWith('<div class="day-entry"')) {
-    throw new Error('Le fragment ne commence pas par .day-entry.');
-  }
-  if (!fragment.includes(`data-date="${iso}"`)) {
-    throw new Error(`data-date absent ou incorrect (attendu ${iso}).`);
-  }
-  const themes = (fragment.match(/class="theme-block"/g) || []).length;
-  if (themes !== 5) throw new Error(`5 theme-block attendus, ${themes} trouvés.`);
+  const html = `<div class="day-entry" data-date="${date.iso}" data-label="${date.label}">
+    <div class="day-banner">${date.label}</div>
+    <div class="day-body">
+
+      <div class="synthesis-block">
+        <p class="synthesis-title">Synthèse du jour</p>
+        <ul class="synthesis-list">
+${puces}
+        </ul>
+      </div>
+
+${blocsThemes}
+
+      <div class="actions-block">
+        <p class="actions-title">Actions potentielles à réaliser</p>
+        <ul class="actions-list">
+${actions}
+        </ul>
+      </div>
+
+    </div>
+  </div>`;
+
+  return { html, retenus };
 }
 
 // ---------------------------------------------------------------------------
-// Insertion dans index.html
+// Lecture de l'historique et insertion
 // ---------------------------------------------------------------------------
-function injectEntry(html, fragment, iso) {
-  const openTag = '<div class="entries">';
-  const start = html.indexOf(openTag);
-  const footer = html.indexOf('<p class="footer-note">');
-  if (start < 0 || footer < 0) {
-    throw new Error('Marqueurs .entries / .footer-note introuvables dans index.html.');
-  }
+function urlsDejaPubliees(html) {
+  return new Set(
+    [...html.matchAll(/<p class="item-source">[\s\S]*?href="([^"]+)"/g)].map((m) => normaliser(m[1]))
+  );
+}
 
-  const head = html.slice(0, start + openTag.length);
-  const tail = html.slice(footer);
-  const body = html.slice(start + openTag.length, footer);
+function inserer(html, fragment, iso) {
+  const balise = '<div class="entries">';
+  const debut = html.indexOf(balise);
+  const pied = html.indexOf('<p class="footer-note">');
+  if (debut < 0 || pied < 0) throw new Error('Marqueurs .entries / .footer-note introuvables.');
 
-  const existing = body
+  const tete = html.slice(0, debut + balise.length);
+  const queue = html.slice(pied);
+  const corps = html.slice(debut + balise.length, pied);
+
+  const existantes = corps
     .split(/(?=<div class="day-entry")/)
     .map((s) => s.trim())
     .filter((s) => s.startsWith('<div class="day-entry"'))
     .map((s) => s.replace(/<\/div>\s*$/, '').trimEnd() + '\n  </div>');
 
-  const others = existing
-    .filter((e) => !e.includes(`data-date="${iso}"`))
-    .slice(0, MAX_DAYS - 1);
-
-  const entries = [fragment, ...others].map((e) => '\n  ' + e.trim()).join('\n');
-  return head + entries + '\n</div>\n\n' + tail;
+  const autres = existantes.filter((e) => !e.includes(`data-date="${iso}"`)).slice(0, MAX_DAYS - 1);
+  const entrees = [fragment, ...autres].map((e) => '\n  ' + e.trim()).join('\n');
+  return tete + entrees + '\n</div>\n\n' + queue;
 }
 
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 try {
-const date = parisDate();
-const current = readFileSync(INDEX, 'utf8');
-const history = readHistory(current);
+  const date = parisDate();
+  const courant = readFileSync(INDEX, 'utf8');
+  const dejaVues = urlsDejaPubliees(courant);
 
-console.log(`Veille du ${date.label} — modèle ${MODEL}`);
-console.log(`Historique : ${history.titles.length} sujet(s) déjà traité(s), à ne pas répéter.`);
+  console.log(`Veille du ${date.label} — fournisseur : ${PROVIDER}\n`);
+  console.log('Collecte des flux :');
+  const articles = await collecter();
 
-const raw = await callGemini(buildPrompt(date, history));
-const text = extractText(raw);
-
-if (!text) {
-  console.error(
-    "Impossible d'extraire le texte de la réponse. Relancez avec DEBUG_RAW=1 et " +
-      'inspectez debug-response.json.'
+  const nouveaux = articles.filter((a) => !dejaVues.has(normaliser(a.url)));
+  console.log(
+    `\n${articles.length} article(s) collecté(s), ${articles.length - nouveaux.length} déjà publié(s), ` +
+      `${nouveaux.length} nouveau(x).`
   );
-  process.exit(1);
-}
 
-let fragment = stripFences(text);
-const { html: filtered, kept, dropped, candidates } = filterItems(fragment, history);
-fragment = filtered;
+  if (nouveaux.length < 3) {
+    console.log("Trop peu de nouveautés pour justifier une édition. index.html inchangé.");
+    process.exitCode = 0;
+  } else {
+    const candidats = nouveaux.slice(0, MAX_CANDIDATS).map((a, i) => ({ ...a, id: i + 1 }));
+    const parId = new Map(candidats.map((c) => [c.id, c]));
 
-if (dropped.length) {
-  console.warn(`\n${dropped.length} item(s) écarté(s) :`);
-  dropped.forEach((d) => console.warn('  - ' + d));
-}
-logCandidates(candidates, date.iso);
+    const prompt = construirePrompt(date, candidats);
+    console.log(`Prompt : ~${Math.round(prompt.length / 4)} tokens pour ${candidats.length} candidats.`);
 
-validate(fragment, date.iso);
+    const reponse = await appelerModele(prompt);
+    const brut = reponse.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
 
-if (kept < 3) {
-  console.error(
-    `\nSeulement ${kept} item(s) retenu(s) après filtrage — publication annulée pour ` +
-      "ne pas dégrader le site. index.html n'a pas été modifié."
-  );
-  process.exit(1);
-}
+    let plan;
+    try {
+      plan = JSON.parse(brut);
+    } catch {
+      throw new Error(
+        'Réponse illisible : le modèle n\'a pas renvoyé de JSON valide. ' +
+          'Relancez avec DEBUG_RAW=1 pour inspecter debug-response.json.\n' +
+          brut.slice(0, 300)
+      );
+    }
 
-console.log(`\n${kept} item(s) publié(s).`);
+    const { html: fragment, retenus } = rendre(date, plan, parId);
+    console.log(`\n${retenus} article(s) retenu(s) par le modèle.`);
 
-if (DRY_RUN) {
-  console.log('--- DRY RUN, index.html non modifié ---\n');
-  console.log(fragment);
-  process.exit(0);
-}
-
-const updated = injectEntry(current, fragment, date.iso);
-writeFileSync(INDEX, updated, 'utf8');
-console.log(
-  `index.html mis à jour — ${(updated.match(/class="day-entry"/g) || []).length} jour(s) d'historique.`
-);
+    if (retenus < 3) {
+      console.error(
+        `Seulement ${retenus} article(s) exploitable(s) — publication annulée pour ne pas ` +
+          "dégrader le site. index.html n'a pas été modifié."
+      );
+      process.exitCode = 1;
+    } else if (DRY_RUN) {
+      console.log('\n--- DRY RUN, index.html non modifié ---\n');
+      console.log(fragment);
+    } else {
+      const maj = inserer(courant, fragment, date.iso);
+      writeFileSync(INDEX, maj, 'utf8');
+      console.log(
+        `index.html mis à jour — ${(maj.match(/class="day-entry"/g) || []).length} jour(s) d'historique.`
+      );
+    }
+  }
 } catch (err) {
   console.error('\nÉchec : ' + (err?.message || err));
   // exitCode plutôt que process.exit() : couper le processus pendant que les
-  // sockets HTTP sont encore ouvertes déclenche une assertion libuv sur Windows
-  // et masque le vrai code de sortie.
+  // sockets HTTP sont ouvertes déclenche une assertion libuv sur Windows.
   process.exitCode = 1;
 }
