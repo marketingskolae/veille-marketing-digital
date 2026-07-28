@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Veille Marketing Digital Quotidienne</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #24262b;
+    --ink-soft: #454852;
+    --ink-faint: #8b8e98;
+    --paper: #fbfaf8;
+    --card: #ffffff;
+    --line: #e8e6e0;
+    --accent: #35519c;
+    --accent-soft: #eef2fb;
+    --accent-line: #d3ddf3;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    margin: 0;
+    padding: 32px 20px 48px 20px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Georgia", "Charter", -apple-system, BlinkMacSystemFont, "Segoe UI", serif;
+    line-height: 1.55;
+  }
+  .page-header {
+    max-width: 720px;
+    margin: 0 auto 22px auto;
+  }
+  .page-header h1 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px 0;
+    color: var(--ink);
+  }
+  .page-header p {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    margin: 0;
+    color: var(--ink-faint);
+    font-size: 13px;
+    letter-spacing: 0.01em;
+  }
+  .date-nav {
+    max-width: 720px;
+    margin: 0 auto 24px auto;
+    position: sticky;
+    top: 12px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 14px;
+    box-shadow: 0 2px 10px rgba(20, 20, 15, 0.05);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  .date-nav label {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .date-nav select {
+    flex: 1;
+    font-size: 14px;
+    font-family: inherit;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .date-nav select:focus {
+    outline: 2px solid var(--accent-line);
+    outline-offset: 1px;
+  }
+  .date-nav button {
+    font-size: 15px;
+    line-height: 1;
+    font-family: inherit;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 7px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .date-nav button:hover:not(:disabled) {
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+  }
+  .date-nav button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .entries {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .day-entry {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(20, 20, 15, 0.04), 0 6px 20px rgba(20, 20, 15, 0.05);
+  }
+  .day-banner {
+    background: var(--ink);
+    color: #ffffff;
+    padding: 13px 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .day-body {
+    padding: 22px 26px 24px 26px;
+  }
+  .synthesis-block {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 26px;
+  }
+  .synthesis-title {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .synthesis-list {
+    margin: 0;
+    padding-left: 20px;
+  }
+  .synthesis-list li {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: #2c3554;
+    margin-bottom: 8px;
+  }
+  .synthesis-list li::marker {
+    color: var(--accent);
+  }
+  .synthesis-list li:last-child {
+    margin-bottom: 0;
+  }
+  .theme-block {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .theme-block:first-of-type {
+    padding-top: 0;
+  }
+  .theme-block:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .theme-title {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0 0 14px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .theme-title::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .item {
+    margin-bottom: 18px;
+    padding-left: 2px;
+  }
+  .item:last-child {
+    margin-bottom: 0;
+  }
+  .item-title {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 15.5px;
+    font-weight: 650;
+    color: var(--ink);
+    margin: 0 0 5px 0;
+    line-height: 1.35;
+  }
+  .item-text {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin: 0 0 6px 0;
+  }
+  .item-source {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+  .item-source a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-line);
+    padding-bottom: 1px;
+    transition: border-color 0.15s ease;
+  }
+  .item-source a:hover {
+    border-color: var(--accent);
+  }
+  .empty-theme {
+    font-size: 14px;
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+  .actions-block {
+    background: #f0f7f1;
+    border: 1px solid #cfe6d3;
+    border-left: 3px solid #2f7a4a;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 22px;
+  }
+  .actions-title {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #2f7a4a;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .actions-list {
+    margin: 0;
+    padding-left: 20px;
+  }
+  .actions-list li {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: #234a30;
+    margin-bottom: 8px;
+  }
+  .actions-list li::marker {
+    color: #2f7a4a;
+  }
+  .actions-list li:last-child {
+    margin-bottom: 0;
+  }
+  .footer-note {
+    max-width: 720px;
+    margin: 16px auto 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Veille Marketing Digital Quotidienne</h1>
+  <p>1. SEO/GEO &middot; 2. IA marketing &middot; 3. SEA/Social Ads &middot; 4. GA4/GTM &middot; 5. UX/CRO — sources exclusivement reconnues par la profession</p>
+</div>
+
+<div class="date-nav">
+  <button id="prev-day" type="button" aria-label="Jour précédent">&larr;</button>
+  <label for="date-selector">Date&nbsp;:</label>
+  <select id="date-selector"></select>
+  <button id="next-day" type="button" aria-label="Jour suivant">&rarr;</button>
+</div>
+
+<div class="entries">
+  <div class="day-entry" data-date="2026-07-28" data-label="Mardi 28 juillet 2026">
+    <div class="day-banner">Mardi 28 juillet 2026</div>
+    <div class="day-body">
+
+      <div class="synthesis-block">
+        <p class="synthesis-title">Synthèse du jour</p>
+        <ul class="synthesis-list">
+          <li>Un forum de plus de 500 000 pages a reçu une action manuelle Google pour « thin content », dans un cas où un chatbot maison avait publié plus de 111 000 réponses : le volume de contenu IA sans valeur ajoutée devient un risque de pénalité concret.</li>
+          <li>Google ajoute trois interdictions explicites à ses consignes sur les avis — faux avis, avis sans expérience réelle, avis obtenus contre un avantage non divulgué — avec risque d'action manuelle à la clé.</li>
+          <li>Le GEO se dote de méthodes : Search Engine Land publie un cadre d'audit de l'« empreinte d'entité » d'une marque dans les systèmes IA, en six dimensions notées de 0 à 5.</li>
+          <li>X a supprimé 42 000 comptes de spam généré par IA, motivés économiquement — un rappel que l'authenticité des signaux sociaux reste un enjeu de plateforme.</li>
+          <li>Une semaine après AI Overviews en France, les annonces ne s'affichent pas encore dans les blocs IA, mais les clics SEA se raréfient et se renchérissent ; la recommandation est de garder environ la moitié du budget en Search classique.</li>
+          <li>Google imposera les passkeys pour toute nouvelle génération de refresh token via l'API Google Ads dès le 5 août 2026 — à anticiper avec les agences et outils tiers.</li>
+        </ul>
+      </div>
+
+      <div class="theme-block">
+        <p class="theme-title">SEO / GEO</p>
+        <div class="item">
+          <p class="item-title">Un forum sanctionné pour « thin content » après des milliers de réponses générées par IA</p>
+          <p class="item-text">Le forum windowsforum.com a reçu le 17 juillet une action manuelle Google pour « contenu peu informatif, avec peu ou pas de valeur ajoutée », visant plus de 500 000 pages de sa catégorie /threads/. Google n'a fourni aucune URL d'exemple. Les SEO pointent le rôle d'un membre-chatbot ayant publié plus de 111 000 réponses depuis 2023, sans l'expérience humaine attendue sur un forum.</p>
+          <p class="item-source">Source : <a href="https://www.searchenginejournal.com/google-may-be-penalizing-ai-generated-content-as-thin-content/583773/" target="_blank" rel="noopener">Search Engine Journal, 27 juillet 2026</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Google élargit ses consignes sur les avis et rappelle le risque d'action manuelle</p>
+          <p class="item-text">La documentation Google sur les extraits d'avis ajoute trois interdictions explicites : faux avis, avis non fondés sur une expérience réelle, et avis obtenus en échange d'un avantage sans divulgation claire. Google précise qu'un manquement peut déclencher une action manuelle contre le site, avec possibilité de correction puis de demande de réexamen.</p>
+          <p class="item-source">Source : <a href="https://www.searchenginejournal.com/google-expands-review-guidelines-and-warns-of-manual-actions/583674/" target="_blank" rel="noopener">Search Engine Journal, 27 juillet 2026</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Un cadre d'audit de l'« empreinte d'entité » dans les systèmes IA</p>
+          <p class="item-text">Search Engine Land propose une méthode d'audit en six dimensions — identité, différenciation, preuves, cohérence, relations et spécialisation — chacune notée de 0 à 5. Elle consiste notamment à demander à plusieurs outils IA de décrire l'organisation, à comparer les messages entre le site et la fiche Google Business Profile, à analyser les thèmes récurrents des avis clients, et à chercher des validations externes (presse, certifications).</p>
+          <p class="item-source">Source : <a href="https://searchengineland.com/audit-ai-entity-footprint-483524" target="_blank" rel="noopener">Search Engine Land, 27 juillet 2026</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Changer l'adresse d'une fiche Google Business Profile ne déplace pas toujours le point sur la carte</p>
+          <p class="item-text">Pour un établissement dont l'adresse est masquée (service-area business), modifier l'adresse dans le tableau de bord ne réancre pas le point sur la carte : il reste rattaché à l'adresse d'enregistrement initiale. Pour une adresse visible, le point suit le déménagement après revérification standard. L'article recommande de passer l'adresse dans l'API Geocoding de Google au préalable, pour vérifier qu'elle résout bien en coordonnée précise plutôt qu'en correspondance partielle.</p>
+          <p class="item-source">Source : <a href="https://searchengineland.com/google-business-profile-address-changes-local-rankings-483537" target="_blank" rel="noopener">Search Engine Land, 27 juillet 2026</a></p>
+        </div>
+      </div>
+
+      <div class="theme-block">
+        <p class="theme-title">IA appliquée au marketing digital</p>
+        <div class="item">
+          <p class="item-title">Sept boucles de feedback pour fiabiliser les workflows de contenu IA</p>
+          <p class="item-text">Search Engine Land détaille sept boucles à installer dans une chaîne de production de contenu assistée par IA : filtre en amont pour valider l'angle avant rédaction, boucle de vérification que les sources correspondent bien aux affirmations, et porte de qualité assortie d'un plafond de révisions. S'y ajoutent des boucles de performance, qui ajustent les briefs suivants à partir du positionnement observé, et des boucles d'apprentissage des corrections récurrentes, réinjectées dans les instructions système.</p>
+          <p class="item-source">Source : <a href="https://searchengineland.com/self-improving-ai-content-workflows-483404" target="_blank" rel="noopener">Search Engine Land, 27 juillet 2026</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">X supprime 42 000 comptes de spam généré par IA</p>
+          <p class="item-text">X a supprimé 42 000 comptes impliqués dans du spam par chatbot. Le responsable produit décrit une opération économiquement motivée : les spammeurs faisaient grossir leur audience pour décrocher des contrats de promotion payés par des sociétés d'IA, avec des publications de « thought leadership » sur l'IA générées automatiquement. La plateforme revendique un délai de traitement de 12 à 18 heures, contre plusieurs mois auparavant.</p>
+          <p class="item-source">Source : <a href="https://www.searchenginejournal.com/x-live-tweets-its-fight-against-chatbot-spam-in-real-time/583572/" target="_blank" rel="noopener">Search Engine Journal, 26 juillet 2026</a></p>
+        </div>
+      </div>
+
+      <div class="theme-block">
+        <p class="theme-title">SEA / Social Ads</p>
+        <div class="item">
+          <p class="item-title">Ce que l'arrivée d'AI Overviews change pour les annonceurs français</p>
+          <p class="item-text">Une semaine après le déploiement d'AI Overviews en France, les annonces ne sont pas encore diffusées dans les blocs IA : les formats Search et Shopping classiques continuent de s'afficher autour des résumés générés par Gemini. Les clics deviennent plus rares et plus chers, ce qui pousse à remonter dans le funnel et à piloter sur des conversions qualifiées plutôt que sur le coût par clic. L'article déconseille une bascule totale vers Performance Max ou AI Max et recommande de conserver environ la moitié du budget en Search traditionnel.</p>
+          <p class="item-source">Source : <a href="https://www.blogdumoderateur.com/publicite-ai-overviews-change-annonceurs/" target="_blank" rel="noopener">Blog du Modérateur, 27 juillet 2026</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Passkeys obligatoires pour l'API Google Ads à partir du 5 août</p>
+          <p class="item-text">À compter du 5 août 2026, Google exigera une passkey pour toute nouvelle génération de refresh token OAuth 2.0 via l'API Google Ads. Les tokens existants restent valides, mais les développeurs, agences et plateformes SaaS créant des accès pour de nouveaux utilisateurs sont concernés ; la création d'une passkey peut être soumise à un délai de sécurité de sept jours. L'exigence s'étend à Google Ads Editor, aux scripts, à BigQuery Data Transfer Service et à Looker Studio.</p>
+          <p class="item-source">Source : <a href="https://searchengineland.com/google-makes-passkeys-mandatory-for-google-ads-api-users-483617" target="_blank" rel="noopener">Search Engine Land, 27 juillet 2026</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Microsoft Ads étend l'Ad Preview Hub à Performance Max</p>
+          <p class="item-text">Microsoft Advertising ouvre son Ad Preview Hub aux campagnes Performance Max : les annonceurs peuvent prévisualiser le rendu des créations selon les emplacements et les appareils avant le lancement. L'outil génère des liens sécurisés partageables, permettant à des parties prenantes de valider les visuels sans accès au compte. La fonctionnalité était jusqu'ici réservée aux Audience Ads.</p>
+          <p class="item-source">Source : <a href="https://searchengineland.com/microsoft-ads-adds-ad-preview-hub-to-performance-max-483607" target="_blank" rel="noopener">Search Engine Land, 27 juillet 2026</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Les demandes de certification arrivent directement dans le compte Google Ads</p>
+          <p class="item-text">Google déploie progressivement la possibilité de demander certaines certifications de règlement directement depuis l'interface Google Ads, pour les annonceurs éligibles, sans passer par un formulaire externe.</p>
+          <p class="item-source">Source : <a href="https://searchengineland.com/google-begins-rolling-out-in-account-certification-applications-483588" target="_blank" rel="noopener">Search Engine Land, 27 juillet 2026</a></p>
+        </div>
+      </div>
+
+      <div class="theme-block">
+        <p class="theme-title">Google Analytics / GTM</p>
+        <p class="empty-theme">Rien de significatif aujourd'hui</p>
+      </div>
+
+      <div class="theme-block">
+        <p class="theme-title">UX Design / CRO</p>
+        <div class="item">
+          <p class="item-title">NN/g : cadrer une étude de recherche à périmètre large</p>
+          <p class="item-text">Nielsen Norman Group publie une vidéo de Lola Famulegun consacrée au cadrage des études de recherche utilisateur à périmètre large. Le point central : la qualité du cadrage conditionne directement les délais, l'efficacité de la recherche et l'utilité des livrables produits.</p>
+          <p class="item-source">Source : <a href="https://www.nngroup.com/videos/scope-your-broad-research-study/" target="_blank" rel="noopener">Nielsen Norman Group, 27 juillet 2026</a></p>
+        </div>
+      </div>
+
+      <div class="actions-block">
+        <p class="actions-title">Actions potentielles à réaliser</p>
+        <ul class="actions-list">
+          <li>Passer en revue les pages et articles produits avec assistance IA sur les sites écoles, et réécrire ou dépublier ceux qui n'apportent aucune valeur propre — l'action manuelle « thin content » du 17 juillet montre que le volume sans expérience réelle expose à une pénalité, y compris sur des sites établis.</li>
+          <li>Vérifier que la collecte d'avis étudiants (JPO, fin de cursus, plateformes d'orientation) n'est jamais conditionnée à une contrepartie non divulguée : les nouvelles consignes Google visent explicitement les avis obtenus en échange d'un avantage.</li>
+          <li>Contrôler chaque adresse de campus dans l'API Geocoding de Google avant toute modification de fiche Google Business Profile à la rentrée, et vérifier le statut « adresse masquée » des fiches concernées — une adresse mal résolue laisse le point sur l'ancienne position et dégrade la visibilité sur les requêtes « école + ville ».</li>
+          <li>Alerter dès cette semaine l'agence SEA et les prestataires connectés à l'API Google Ads pour qu'ils créent leurs passkeys avant le 5 août, délai de sécurité de sept jours compris, afin d'éviter une rupture d'accès en pleine campagne de rentrée.</li>
+          <li>Réviser le pilotage SEA de rentrée : conserver environ la moitié du budget en Search classique plutôt que basculer sur Performance Max ou AI Max, et arbitrer sur les demandes de documentation et les inscriptions JPO plutôt que sur le coût par clic, moins lisible depuis l'arrivée d'AI Overviews en France.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="day-entry" data-date="2026-07-24" data-label="Vendredi 24 juillet 2026">
+    <div class="day-banner">Vendredi 24 juillet 2026</div>
+    <div class="day-body">
+
+      <div class="synthesis-block">
+        <p class="synthesis-title">Synthèse du jour</p>
+        <ul class="synthesis-list">
+          <li>Google a déployé AI Overviews et l'AI Mode en France le 22 juillet 2026, après deux ans de retard réglementaire — impact direct sur la visibilité SEO en France dès maintenant.</li>
+          <li>75 % des annonceurs interrogés estiment que le GEO dépassera le SEO en importance sous 2 à 3 ans (AI SCOPE 2026 / Semji).</li>
+          <li>Marché publicitaire digital français : 6,7 Md€ de revenus au S1 2026 (+12 % sur un an) ; le social media pèse 2,22 Md€, soit 33 % du marché (+16 %).</li>
+          <li>Google Ads impose désormais la déclaration du contenu publicitaire généré par IA (déploiement en cours tout juillet).</li>
+          <li>Performance Max : reporting produit étendu à tous les réseaux et nouvel outil Channel Diagnostics — à surveiller pour éviter les erreurs de lecture de performance.</li>
+          <li>NN/g (State of UX 2026) : l'automatisation gère l'exécution, le jugement humain et la recherche restent le facteur différenciant en UX/CRO.</li>
+        </ul>
+      </div>
+
+      <div class="theme-block">
+        <p class="theme-title">SEO / GEO</p>
+        <div class="item">
+          <p class="item-title">Google officialise : « AEO et GEO restent du SEO »</p>
+          <p class="item-text">Google Search Central a publié le 15 mai 2026 (annonce de John Mueller) un guide officiel d'optimisation pour les fonctionnalités IA générative de la recherche. Il rappelle que les bonnes pratiques SEO classiques restent la base de la visibilité dans les résultats IA, et que llms.txt, le découpage de contenu spécifique ou un balisage schema dédié ne sont pas nécessaires pour apparaître dans ces fonctionnalités.</p>
+          <p class="item-source">Source : <a href="https://www.searchenginejournal.com/googles-new-ai-search-guide-calls-aeo-and-geo-still-seo/575026/" target="_blank" rel="noopener">Search Engine Journal</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Écart massif de visibilité IA pour le local</p>
+          <p class="item-text">Le Local Visibility Index 2026 de SOCi montre que ChatGPT ne recommande que 1,2 % des ~350 000 établissements analysés, contre un taux d'apparition de 35,9 % dans le pack local à 3 résultats de Google — un écart d'environ 30 fois, révélateur du chemin qu'il reste à parcourir pour la visibilité IA locale.</p>
+          <p class="item-source">Source : <a href="https://searchengineland.com/library/ai-seo/generative-engine-optimization" target="_blank" rel="noopener">Search Engine Land — bibliothèque GEO</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Documentation Google Search Central enrichie</p>
+          <p class="item-text">Google a ajouté de nouvelles sections à sa documentation sur les contenus locaux, shopping, image et vidéo, corrige des idées reçues sur l'AEO/GEO et introduit des premières indications sur les agents IA.</p>
+          <p class="item-source">Source : <a href="https://developers.google.com/search/updates/" target="_blank" rel="noopener">Google Search Central — What's new</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">AI Overviews et AI Mode lancés en France</p>
+          <p class="item-text">Google a déployé AI Overviews et l'AI Mode sur le marché français le 22 juillet 2026, après deux ans de retard réglementaire. Selon les échanges autour d'AI SCOPE 2026 (Semji), 75 % des annonceurs interrogés estiment que le GEO dépassera le SEO en importance sous 2 à 3 ans.</p>
+          <p class="item-source">Source : <a href="https://www.blogdumoderateur.com/acquisition-marketing-double-shift-ia-conseils-semji-ai-scope-2026/" target="_blank" rel="noopener">Blog du Modérateur</a></p>
+        </div>
+      </div>
+
+      <div class="theme-block">
+        <p class="theme-title">IA appliquée au marketing digital</p>
+        <div class="item">
+          <p class="item-title">Google Ads impose la déclaration du contenu généré par IA</p>
+          <p class="item-text">Un déploiement progressif tout au long du mois de juillet impose aux annonceurs utilisant des outils IA tiers pour créer ou modifier une annonce de le déclarer, sur Search, YouTube, Discover, DV360, CM360, Merchant Center et Ads Editor.</p>
+          <p class="item-source">Source : <a href="https://www.searchenginejournal.com/google-ads-requires-disclosure-for-ai-generated-content/581925/" target="_blank" rel="noopener">Search Engine Journal</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Google Marketing Live 2026 : Gemini au cœur de la publicité</p>
+          <p class="item-text">Google positionne Gemini comme la couche IA transverse de son écosystème publicité/commerce/mesure, avec le lancement d'Ask Advisor (agent IA de recommandations stratégiques) et une refonte d'Asset Studio pour la génération créative multimodale.</p>
+          <p class="item-source">Source : <a href="https://www.thinkwithgoogle.com/next/v2/article/search-and-video/google-marketing-live-2026-collection/" target="_blank" rel="noopener">Think with Google</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Un fossé mesure/confiance persiste sur la visibilité IA</p>
+          <p class="item-text">45 % des responsables marketing déclarent ne pas pouvoir mesurer fiablement la visibilité de leur marque dans les réponses générées par IA, alors même que le trafic IA vers les sites retail américains a progressé de 1 324 % entre octobre 2024 et mai 2026.</p>
+          <p class="item-source">Source : <a href="https://www.semrush.com/news/463141-semrush-releases-expanded-2026-ai-visibility-index-analyzing-126-million-ai-search-prompts/" target="_blank" rel="noopener">Semrush</a></p>
+        </div>
+      </div>
+
+      <div class="theme-block">
+        <p class="theme-title">SEA / Social Ads</p>
+        <div class="item">
+          <p class="item-title">Performance Max : reporting produit étendu à tous les réseaux</p>
+          <p class="item-text">Depuis le 15 juin, le reporting produit de Performance Max n'est plus limité au réseau Search : il couvre désormais Vidéo, App et Demand Gen. Les annonceurs peuvent observer des hausses soudaines d'impressions et de clics qui reflètent un périmètre de mesure élargi, pas une amélioration réelle de performance.</p>
+          <p class="item-source">Source : <a href="https://searchengineland.com/google-expands-performance-max-product-reporting-across-all-networks-482579" target="_blank" rel="noopener">Search Engine Land</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Nouveau Channel Diagnostics dans Performance Max</p>
+          <p class="item-text">Google lance un outil de diagnostic centralisé (Insights &amp; Reports &gt; Channel Performance) qui identifie les assets manquants ou désapprouvés limitant la diffusion des campagnes, canal par canal.</p>
+          <p class="item-source">Source : <a href="https://searchengineland.com/google-adds-channel-diagnostics-to-performance-max-481445" target="_blank" rel="noopener">Search Engine Land</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">LinkedIn : Reserved Ads et personnalisation dynamique</p>
+          <p class="item-text">LinkedIn déploie les Reserved Ads (placement premium garanti en tête de fil, disponible sur les formats Vidéo, Thought Leader, Image unique et Document) ainsi que la personnalisation dynamique des messages à partir des données de profil (prénom, poste, secteur, entreprise).</p>
+          <p class="item-source">Source : <a href="https://searchengineland.com/linkedin-rolls-out-tools-to-make-b2b-brand-advertising-more-predictable-466019" target="_blank" rel="noopener">Search Engine Land</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Marché publicitaire digital français : +12 % au S1 2026</p>
+          <p class="item-text">Le marché de la publicité digitale française a généré 6,7 Md€ de revenus au premier semestre 2026, en hausse de 12 % sur un an. Le social media pèse 2,22 Md€, soit 33 % du marché, avec une croissance de 16 % sur le semestre.</p>
+          <p class="item-source">Source : <a href="https://www.blogdumoderateur.com/publicite-digitale-france-chiffres-cles-1er-semestre-2026/" target="_blank" rel="noopener">Blog du Modérateur</a></p>
+        </div>
+      </div>
+
+      <div class="theme-block">
+        <p class="theme-title">Google Analytics / GTM</p>
+        <div class="item">
+          <p class="item-title">Une balise Google native arrive dans Tag Manager</p>
+          <p class="item-text">À partir de début septembre 2026, une balise « Google tag » sera déployable directement dans Tag Manager en remplacement de la balise de configuration GA4, avec une intégration renforcée (par exemple l'envoi des conversions Google Ads via GTM).</p>
+          <p class="item-source">Source : <a href="https://support.google.com/tagmanager/announcements/15205707?hl=en" target="_blank" rel="noopener">Google Tag Manager — annonces</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">GA4 introduit le regroupement de sources</p>
+          <p class="item-text">La nouvelle dimension « source grouping » consolide en une seule valeur de reporting les multiples variantes de source d'une même plateforme (Facebook, Instagram, TikTok), simplifiant l'analyse d'acquisition.</p>
+          <p class="item-source">Source : <a href="https://support.google.com/analytics/announcements/10707884?hl=en" target="_blank" rel="noopener">Google Analytics — annonces</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">Trois nouvelles variables intégrées dans GTM</p>
+          <p class="item-text">Tag Manager ajoute Client ID, Session ID et Session Number comme variables intégrées dans la catégorie Utilities, disponibles sans configuration manuelle.</p>
+          <p class="item-source">Source : <a href="https://support.google.com/tagmanager/answer/4620708?hl=en" target="_blank" rel="noopener">Google Tag Manager — notes de version</a></p>
+        </div>
+      </div>
+
+      <div class="theme-block">
+        <p class="theme-title">UX Design / CRO</p>
+        <div class="item">
+          <p class="item-title">NN/g : la différenciation UX passe par le jugement humain</p>
+          <p class="item-text">Le rapport « State of UX 2026 » de Nielsen Norman Group souligne que l'automatisation prend en charge l'exécution, mais que le goût affiné, la compréhension contextuelle issue de la recherche et l'esprit critique sur les problèmes utilisateurs restent le facteur différenciant des équipes qui réussiront.</p>
+          <p class="item-source">Source : <a href="https://www.nngroup.com/articles/state-of-ux-2026/" target="_blank" rel="noopener">Nielsen Norman Group</a></p>
+        </div>
+        <div class="item">
+          <p class="item-title">CXL : ancrer la recherche utilisateur dans l'expérimentation</p>
+          <p class="item-text">CXL recommande de trianguler méthodes qualitatives et quantitatives et d'intégrer la recherche utilisateur directement dans les programmes de test A/B, plutôt que de traiter la CRO comme une pratique purement pilotée par le design.</p>
+          <p class="item-source">Source : <a href="https://cxl.com/blog/user-research-culture/" target="_blank" rel="noopener">CXL</a></p>
+        </div>
+      </div>
+
+      <div class="actions-block">
+        <p class="actions-title">Actions potentielles à réaliser</p>
+        <ul class="actions-list">
+          <li>Auditer la présence des pages programmes (BTS, Bachelor, Mastère) dans les réponses Google AI Overviews / AI Mode et ChatGPT sur les requêtes prioritaires de la marque, avant la période Parcoursup — le lancement France du 22 juillet change la donne dès maintenant.</li>
+          <li>Vérifier avec l'agence et l'équipe créa quels visuels ou textes publicitaires en cours ont été générés ou retouchés par IA, pour anticiper la déclaration obligatoire Google Ads avant la fin du déploiement de juillet.</li>
+          <li>Ne pas interpréter la hausse d'impressions/clics Performance Max de juin comme une amélioration réelle de performance avant d'avoir isolé l'effet du changement de périmètre de reporting produit.</li>
+          <li>Planifier un test de la nouvelle balise Google native dans l'environnement de recette GTM avant la bascule de début septembre, pour anticiper l'impact sur le suivi des conversions Google Ads.</li>
+          <li>Sur le prochain chantier de refonte ou d'optimisation de conversion, prévoir une phase de recherche utilisateur (qualitatif + quantitatif) plutôt que de s'appuyer uniquement sur des outils IA d'automatisation.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<p class="footer-note">Mise à jour quotidienne automatique &middot; Sources limitées aux références reconnues par la profession &middot; Historique conservé sur 14 jours</p>
+
+<script>
+(function () {
+  var entries = Array.prototype.slice.call(document.querySelectorAll('.day-entry'));
+  var select = document.getElementById('date-selector');
+  var prevBtn = document.getElementById('prev-day');
+  var nextBtn = document.getElementById('next-day');
+
+  // entries are expected in antichronological DOM order (most recent first)
+  entries.forEach(function (entry) {
+    var opt = document.createElement('option');
+    opt.value = entry.getAttribute('data-date') || '';
+    opt.textContent = entry.getAttribute('data-label') || entry.getAttribute('data-date') || 'Jour';
+    select.appendChild(opt);
+  });
+
+  function showIndex(idx) {
+    if (idx < 0 || idx >= entries.length) return;
+    entries.forEach(function (entry, i) {
+      entry.style.display = (i === idx) ? '' : 'none';
+    });
+    select.selectedIndex = idx;
+    prevBtn.disabled = (idx >= entries.length - 1); // "précédent" = jour plus ancien = index suivant
+    nextBtn.disabled = (idx <= 0); // "suivant" = jour plus récent = index précédent
+  }
+
+  select.addEventListener('change', function () {
+    showIndex(select.selectedIndex);
+  });
+  prevBtn.addEventListener('click', function () {
+    showIndex(select.selectedIndex + 1);
+  });
+  nextBtn.addEventListener('click', function () {
+    showIndex(select.selectedIndex - 1);
+  });
+
+  if (entries.length > 0) {
+    showIndex(0);
+  }
+})();
+</script>
+
+</body>
+</html>
