@@ -1,0 +1,58 @@
+name: Veille marketing digital
+
+on:
+  # Le cron GitHub est en UTC et ne connaît pas l'heure d'été. On déclenche donc
+  # à 06:00 et 07:00 UTC, et l'étape "Cadrage horaire" ne laisse passer que
+  # l'exécution qui tombe réellement à 8h à Paris.
+  schedule:
+    - cron: '0 6 * * *'
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: veille
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cadrage horaire (8h Europe/Paris)
+        id: gate
+        run: |
+          HEURE=$(TZ=Europe/Paris date +%H)
+          echo "Heure de Paris : ${HEURE}h"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$HEURE" != "08" ]; then
+            echo "Ce n'est pas 8h à Paris — exécution ignorée."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.skip != 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          node-version: '20'
+
+      - name: Générer la veille du jour
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: node scripts/generate.mjs
+
+      - name: Publier
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          git config user.name "Veille automatique"
+          git config user.email "action@github.com"
+          git add index.html sources-candidates.md 2>/dev/null || git add index.html
+          if git diff --staged --quiet; then
+            echo "Aucun changement — rien à publier aujourd'hui."
+            exit 0
+          fi
+          git commit -m "Veille du $(TZ=Europe/Paris date +%d/%m/%Y)"
+          git push
