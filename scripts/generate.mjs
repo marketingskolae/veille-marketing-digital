@@ -26,6 +26,7 @@ const INDEX = join(ROOT, 'index.html');
 const PROVIDER = process.env.PROVIDER || (process.env.GEMINI_API_KEY && !process.env.GITHUB_TOKEN ? 'gemini' : 'github');
 const DRY_RUN = process.env.DRY_RUN === '1';
 const DEBUG_RAW = process.env.DEBUG_RAW === '1';
+const FORCE = process.env.FORCE === '1';   // regenerer une journee deja publiee
 const MAX_DAYS = 14;
 const MAX_CANDIDATS = 75;      // plafond global (budget : ~5 500 tokens sur 8 000)
 const MAX_PAR_GROUPE = 22;     // plafond par thème pressenti
@@ -98,7 +99,7 @@ async function appelerModele(prompt) {
     body: JSON.stringify({
       model: process.env.GITHUB_MODEL || 'openai/gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.15,
+      temperature: 0.25,
       max_tokens: 4000,
     }),
   });
@@ -173,27 +174,34 @@ PÉRIMÈTRE DE CHAQUE THÈME — un article doit relever pleinement du thème o�
 - Google Analytics / GTM : mesure et tracking — GA4, Tag Manager, attribution, consentement, tracking serveur.
 - UX Design / CRO : ergonomie, design d'interface, parcours, recherche utilisateur, tests A/B, optimisation du taux de conversion.
 
-RÈGLE DE SÉLECTION — la pertinence prime sur le volume, toujours.
-Pose-toi la question pour chaque article : « un Responsable Marketing Digital le rangerait-il spontanément dans ce thème ? » Si la réponse est non, ou si tu dois forcer le raisonnement pour l'y faire entrer, écarte-le. Ne loge jamais un article dans le thème le moins mal adapté : s'il ne relève clairement d'aucun des cinq périmètres ci-dessus, il n'a pas sa place dans la veille.
+RÈGLE DE SÉLECTION — procède en deux temps distincts, ne les confonds pas.
 
-Un thème vide est un résultat correct et fréquent — certaines journées n'apportent rien en Analytics ou en UX. Une édition de 5 articles justes vaut mieux qu'une de 12 dont la moitié est hors sujet : le lecteur perd confiance dès le premier article mal classé.
+Premier temps, le classement. Pour chaque article : « de quel thème relève-t-il ? » C'est une question de sujet, pas de qualité. Le seuil est bas : une actualité publiée par un média spécialisé sur son domaine de prédilection relève de ce thème par défaut. Une annonce Google Ads est du SEA, une mise à jour d'algorithme est du SEO, même si elle te paraît mineure. N'écarte à ce stade que ce qui ne relève réellement d'aucun des cinq périmètres — et n'attribue jamais un article au thème le moins mal adapté.
 
-Sont notamment à écarter, même publiés par une source de référence : les listes de formations ou d'outils, les pages d'avis sur un produit, les actualités d'entreprise, la cybersécurité, les levées de fonds, et tout contenu promotionnel.
+Sont à écarter d'office, même venant d'une source de référence : listes de formations ou d'outils, pages d'avis sur un produit, actualités d'entreprise, cybersécurité, levées de fonds, développement logiciel, contenus promotionnels, billets d'opinion sans fait vérifiable.
 
-VOLUME — au maximum 4 articles par thème, 16 au total, et aucun minimum imposé.
+Second temps, la sélection — procède thème par thème, jamais globalement.
 
-Repère de calibrage, à ne pas confondre avec un quota : sur ${candidats.length} candidats, une édition juste en retient habituellement 8 à 12. Si tu descends sous 6, reprends les articles écartés et vérifie que tu n'as pas confondu « ne relève pas du thème » avec « sujet que je trouve mineur » — un article pleinement dans le périmètre se retient même s'il n'est pas spectaculaire. À l'inverse, si tu dépasses 14, tu as probablement laissé passer des articles en forçant leur classement.
+Pour chaque thème, prends les articles que tu viens d'y classer, ordonne-les par intérêt décroissant pour un Responsable Marketing Digital, et garde les premiers selon cette règle :
+- le thème contient 4 articles classés ou plus → tu en gardes 4 ;
+- il en contient 2 ou 3 → tu les gardes tous ;
+- il en contient 1 → tu le gardes ;
+- il n'en contient aucun → le thème reste vide.
+
+Cette règle n'est pas un objectif à atteindre, c'est la règle elle-même. Tu n'as pas à décider si un article « mérite » d'être publié : s'il relève du thème et qu'il figure parmi les quatre plus intéressants de ce thème, il est retenu. Le tri d'intérêt sert uniquement à choisir lesquels garder quand il y en a plus de quatre, jamais à en écarter quand il y en a moins.
 
 RÈGLES
 - Un même article ne peut apparaître que dans un seul thème.
-- Rédige 2 à 3 phrases factuelles par article, à partir du titre et du résumé fournis. N'invente aucun chiffre, aucune date, aucun fait absent du résumé. Si le résumé est trop maigre pour être factuel, n'utilise pas cet article.
+- Rédige 2 à 3 phrases factuelles par article, à partir du titre et du résumé fournis. N'invente aucun chiffre, aucune date, aucun fait absent du résumé. Si le résumé est court, écris une seule phrase plutôt que d'inventer — ce n'est pas une raison d'écarter l'article.
 - Traduis les titres anglais en français.
 - Ton informatif et pragmatique, sans superlatifs.
 
 SYNTHÈSE : 4 à 6 puces courtes couvrant l'ensemble des thèmes retenus, en priorisant SEO/GEO et IA, puis le marché francophone. Elles doivent être lisibles seules, sans avoir à parcourir le détail.
 
-FORMAT — réponds uniquement par ce JSON, sans texte autour ni bloc de code :
-{"synthese":["..."],"themes":{"seo":[{"id":12,"titre":"Titre court","texte":"2-3 phrases."}],"ia":[],"sea":[],"ga4":[],"ux":[]}}
+FORMAT — réponds uniquement par ce JSON, sans texte autour ni bloc de code. Les cinq clés de "themes" sont toujours présentes, et chacune contient les articles que tu as retenus pour ce thème :
+{"synthese":["..."],"themes":{"seo":[{"id":12,"titre":"Titre court","texte":"2-3 phrases."},{"id":30,"titre":"...","texte":"..."}],"ia":[{"id":28,"titre":"...","texte":"..."}],"sea":[{"id":9,"titre":"...","texte":"..."},{"id":24,"titre":"...","texte":"..."}],"ga4":[{"id":13,"titre":"...","texte":"..."}],"ux":[{"id":27,"titre":"...","texte":"..."}]}}
+
+Les numéros ci-dessus ne sont qu'une illustration de la forme attendue : ce ne sont ni les articles à retenir, ni le nombre d'articles par thème. Un tableau vide est possible, mais uniquement si aucun article du jour ne relève de ce thème.
 
 Le champ "id" doit reprendre exactement le numéro entre crochets de l'article. N'écris jamais d'URL : les liens sont ajoutés automatiquement.
 
@@ -313,6 +321,17 @@ function inserer(html, fragment, iso) {
 try {
   const date = parisDate();
   const courant = readFileSync(INDEX, 'utf8');
+
+  // Idempotence : si la journée est déjà publiée, on ne refait rien. C'est ce
+  // qui rend sûr de programmer plusieurs créneaux de rattrapage — GitHub
+  // documente que les exécutions planifiées peuvent être retardées, voire
+  // abandonnées, en période de charge. Le premier créneau qui aboutit publie,
+  // les suivants sortent immédiatement sans appeler le modèle.
+  if (!FORCE && courant.includes(`data-date="${date.iso}"`)) {
+    console.log(`La veille du ${date.label} est déjà publiée — rien à faire.`);
+    console.log('(FORCE=1 pour régénérer la journée malgré tout.)');
+  } else {
+
   const dejaVues = urlsDejaPubliees(courant, date.iso);
 
   console.log(`Veille du ${date.label} — fournisseur : ${PROVIDER}\n`);
@@ -347,6 +366,10 @@ try {
 
     const prompt = construirePrompt(date, candidats);
     console.log(`Prompt : ~${Math.round(prompt.length / 4)} tokens pour ${candidats.length} candidats.`);
+    if (process.env.DUMP_PROMPT === '1') {
+      writeFileSync(join(ROOT, 'debug-prompt.txt'), prompt, 'utf8');
+      console.log('Prompt écrit dans debug-prompt.txt');
+    }
 
     const reponse = await appelerModele(prompt);
     const brut = reponse.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
@@ -385,6 +408,7 @@ try {
       );
     }
   }
+  } // fin du garde d'idempotence
 } catch (err) {
   console.error('\nÉchec : ' + (err?.message || err));
   // exitCode plutôt que process.exit() : couper le processus pendant que les
