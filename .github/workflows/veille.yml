@@ -37,6 +37,7 @@ jobs:
 
       - name: Générer la veille du jour
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Une exécution manuelle régénère la journée même si elle est déjà
           # publiée ; les exécutions planifiées respectent l'idempotence.

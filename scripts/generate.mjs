@@ -23,7 +23,10 @@ import { collecter, normaliser } from './feeds.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const INDEX = join(ROOT, 'index.html');
 
-const PROVIDER = process.env.PROVIDER || (process.env.GEMINI_API_KEY && !process.env.GITHUB_TOKEN ? 'gemini' : 'github');
+// GitHub Models a été retiré le 30 juillet 2026. Gemini devient le défaut dès
+// qu'une clé est présente ; GITHUB_TOKEN reste défini dans Actions pour git,
+// donc il ne peut plus servir à choisir le fournisseur.
+const PROVIDER = process.env.PROVIDER || (process.env.GEMINI_API_KEY ? 'gemini' : 'github');
 const DRY_RUN = process.env.DRY_RUN === '1';
 const DEBUG_RAW = process.env.DEBUG_RAW === '1';
 const FORCE = process.env.FORCE === '1';   // regenerer une journee deja publiee
@@ -72,11 +75,22 @@ async function appelerModele(prompt) {
   if (PROVIDER === 'gemini') {
     const cle = process.env.GEMINI_API_KEY;
     if (!cle) throw new Error('PROVIDER=gemini mais GEMINI_API_KEY est absente.');
-    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
-      method: 'POST',
-      headers: { 'x-goog-api-key': cle, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: process.env.GEMINI_MODEL || 'gemini-3.6-flash', input: prompt }),
-    });
+    // generateContent et non l'API Interactions : c'est le point d'accès
+    // historique et stable, dont la forme de réponse est documentée
+    // (candidates[0].content.parts[].text). L'API Interactions n'avait jamais
+    // pu être validée — aucun appel n'avait abouti.
+    const modele = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'x-goog-api-key': cle, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.25, maxOutputTokens: 4000 },
+        }),
+      }
+    );
     const corps = await res.text();
     if (!res.ok) throw new Error(`Gemini ${res.status} : ${corps.slice(0, 500)}`);
     return extraireTexte(JSON.parse(corps));
