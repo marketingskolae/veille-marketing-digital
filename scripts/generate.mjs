@@ -26,7 +26,8 @@ const INDEX = join(ROOT, 'index.html');
 // GitHub Models a été retiré le 30 juillet 2026. Gemini devient le défaut dès
 // qu'une clé est présente ; GITHUB_TOKEN reste défini dans Actions pour git,
 // donc il ne peut plus servir à choisir le fournisseur.
-const PROVIDER = process.env.PROVIDER || (process.env.GEMINI_API_KEY ? 'gemini' : 'github');
+const CLE_GEMINI = (process.env.GEMINI_API_KEY || '').trim();
+const PROVIDER = process.env.PROVIDER || (CLE_GEMINI ? 'gemini' : 'github');
 const DRY_RUN = process.env.DRY_RUN === '1';
 const DEBUG_RAW = process.env.DEBUG_RAW === '1';
 const FORCE = process.env.FORCE === '1';   // regenerer une journee deja publiee
@@ -73,8 +74,8 @@ function echapper(s) {
 // ---------------------------------------------------------------------------
 async function appelerModele(prompt) {
   if (PROVIDER === 'gemini') {
-    const cle = process.env.GEMINI_API_KEY;
-    if (!cle) throw new Error('PROVIDER=gemini mais GEMINI_API_KEY est absente.');
+    const cle = CLE_GEMINI;
+    if (!cle) throw new Error('PROVIDER=gemini mais GEMINI_API_KEY est vide ou absente.');
     // generateContent et non l'API Interactions : c'est le point d'accès
     // historique et stable, dont la forme de réponse est documentée
     // (candidates[0].content.parts[].text). L'API Interactions n'avait jamais
@@ -96,32 +97,13 @@ async function appelerModele(prompt) {
     return extraireTexte(JSON.parse(corps));
   }
 
-  const jeton = process.env.GITHUB_TOKEN;
-  if (!jeton) {
-    throw new Error(
-      'GITHUB_TOKEN absent. Dans GitHub Actions il est fourni automatiquement ; ' +
-        'en local, exportez-en un ou utilisez PROVIDER=gemini.'
-    );
-  }
-  const res = await fetch('https://models.github.ai/inference/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${jeton}`,
-      Accept: 'application/vnd.github+json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: process.env.GITHUB_MODEL || 'openai/gpt-4.1',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.25,
-      max_tokens: 4000,
-    }),
-  });
-  const corps = await res.text();
-  if (!res.ok) throw new Error(`GitHub Models ${res.status} : ${corps.slice(0, 500)}`);
-  const json = JSON.parse(corps);
-  if (DEBUG_RAW) writeFileSync(join(ROOT, 'debug-response.json'), JSON.stringify(json, null, 2));
-  return json?.choices?.[0]?.message?.content || '';
+  // GitHub Models a été retiré le 30 juillet 2026 : le point d'accès répond
+  // 410. Inutile de tenter l'appel — on dit franchement ce qui manque, plutôt
+  // que de renvoyer « GITHUB_TOKEN absent », qui avait égaré le diagnostic.
+  throw new Error(
+    'Aucune clé Gemini utilisable. GEMINI_API_KEY est vide ou absente, et GitHub ' +
+      "Models, l'ancien fournisseur de secours, a ete retire le 30 juillet 2026."
+  );
 }
 
 // L'API Gemini Interactions renvoie une arborescence d'étapes ; on récupère les
