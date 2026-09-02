@@ -81,6 +81,12 @@ async function appelerModele(prompt) {
     // (candidates[0].content.parts[].text). L'API Interactions n'avait jamais
     // pu être validée — aucun appel n'avait abouti.
     const modele = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+    // Garde-temps : sans lui, une API qui ne repond pas fige le script
+    // indefiniment — en local comme dans Actions, ou le job brulerait
+    // jusqu au delai maximal sans rien dire.
+    const ctrl = new AbortController();
+    const minuteur = setTimeout(() => ctrl.abort(), 90000);
+    console.log(`Appel du modele ${modele}...`);
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`,
       {
@@ -88,13 +94,44 @@ async function appelerModele(prompt) {
         headers: { 'x-goog-api-key': cle, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.25, maxOutputTokens: 4000 },
+          generationConfig: {
+            temperature: 0.25,
+            maxOutputTokens: 16384,
+            // Sortie JSON native. Sans elle, le modele fait preceder sa
+            // reponse de son raisonnement (« Total candidates: 10. Rule:
+            // Keep top 4... »), qui n'est pas du JSON parsable.
+            responseMimeType: 'application/json',
+          },
         }),
+        signal: ctrl.signal,
       }
-    );
+    ).catch((e) => {
+      if (e.name === 'AbortError') throw new Error('Gemini : aucune reponse apres 90 s.');
+      throw e;
+    });
+    clearTimeout(minuteur);
     const corps = await res.text();
-    if (!res.ok) throw new Error(`Gemini ${res.status} : ${corps.slice(0, 500)}`);
-    return extraireTexte(JSON.parse(corps));
+    if (!res.ok) {
+      // Empreinte non reversible de la cle reellement transmise : longueur et
+      // extremites suffisent a distinguer une cle tronquee, entouree de
+      // guillemets, ou simplement obsolete — sans jamais l exposer.
+      const e = cle.length + ' car., ' + cle.slice(0, 4) + '...' +  cle.slice(-4);
+      throw new Error(`Gemini ${res.status} (cle envoyee : ${e}) : ${corps.slice(0, 400)}`);
+    }
+    const rep = JSON.parse(corps);
+    const fin = rep?.candidates?.[0]?.finishReason;
+    const u = rep?.usageMetadata || {};
+    console.log(
+      `Reponse : arret=${fin || '?'} · entree=${u.promptTokenCount ?? '?'} · ` +
+        `sortie=${u.candidatesTokenCount ?? '?'} · reflexion=${u.thoughtsTokenCount ?? 0}`
+    );
+    if (fin && fin !== 'STOP') {
+      throw new Error(
+        `Gemini a interrompu sa reponse (${fin}). Le JSON est donc incomplet. ` +
+          'Si MAX_TOKENS : augmenter maxOutputTokens ou reduire le nombre de candidats.'
+      );
+    }
+    return extraireTexte(rep);
   }
 
   // GitHub Models a été retiré le 30 juillet 2026 : le point d'accès répond
@@ -368,8 +405,13 @@ try {
     }
 
     const reponse = await appelerModele(prompt);
-    const brut = reponse.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
-
+    // Le modele peut encadrer le JSON de texte libre malgre la consigne : on
+    // retire les balises de code, puis on isole le premier objet complet.
+    let brut = reponse.replace(/^\s*```(?:json)?/i, '').replace(/```\s*$/, '').trim();
+    if (!brut.startsWith('{')) {
+      const d = brut.indexOf('{'), fN = brut.lastIndexOf('}');
+      if (d >= 0 && fN > d) brut = brut.slice(d, fN + 1);
+    }
     let plan;
     try {
       plan = JSON.parse(brut);
